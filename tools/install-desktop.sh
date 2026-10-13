@@ -113,8 +113,8 @@ fi
 
 # --- launcher, autostart, icons ------------------------------------------------
 mkdir -p "$APPS" "$ICONS/scalable/apps" "$ICONS/symbolic/apps" "$AUTOSTART"
-install -m 644 "$ROOT/contrib/desktop/$ID.svg" "$ICONS/scalable/apps/$ID.svg"
-install -m 644 "$ROOT/contrib/desktop/$ID-symbolic.svg" "$ICONS/symbolic/apps/$ID-symbolic.svg"
+install -m 644 "$ROOT/data/icons/multidrop.svg" "$ICONS/scalable/apps/$ID.svg"
+install -m 644 "$ROOT/data/icons/multidrop-symbolic.svg" "$ICONS/symbolic/apps/$ID-symbolic.svg"
 
 entry() {  # $1 = extra Exec arguments
   cat <<DESKTOP
@@ -189,7 +189,7 @@ if gnome && have gnome-extensions; then
   fi
 fi
 if [ ! -x /usr/lib/omdrop/omdrop-discoverable ]; then
-  echo "note: AirDrop needs omdrop-owl (root install, see INSTALL-ROOT.md)."
+  echo "note: AirDrop needs omdrop-owl (root install, see docs/INSTALL-ROOT.md)."
   case $family in
     debian) echo "      tools/build-omdrop-owl.sh, then: sudo apt install ./build/airdrop/omdrop-owl_*.deb" ;;
     *) echo "      Build from https://github.com/t4t5/omdrop-owl (its README)." ;;

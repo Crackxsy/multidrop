@@ -2,7 +2,7 @@
 
 Serves the API on a Unix socket and the web UI on 127.0.0.1, asks about
 incoming transfers through desktop notifications. Meant to run as a
-systemd --user service (contrib/systemd/multidropd.service).
+systemd --user service (data/systemd/multidropd.service).
 """
 
 from __future__ import annotations

@@ -2,7 +2,7 @@
 #
 # Install (as the user, no root):
 #   mkdir -p ~/.config/systemd/user
-#   cp contrib/systemd/multidropd.service ~/.config/systemd/user/
+#   cp data/systemd/multidropd.service ~/.config/systemd/user/
 #   systemctl --user daemon-reload
 #   systemctl --user enable --now multidropd
 #   multidrop ui --open

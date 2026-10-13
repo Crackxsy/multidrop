@@ -3,7 +3,7 @@
 Goal: one tool for nearby sharing in both directions with **Quick Share**
 (Android/Samsung), **LocalSend**, **AirDrop** and **AirPlay**, a common service
 and CLI, and native-feeling apps on Linux and Windows. Research notes:
-[docs/RESEARCH.md](docs/RESEARCH.md).
+[RESEARCH.md](RESEARCH.md).
 
 ## Overview
 
@@ -133,8 +133,8 @@ tools/
   install-desktop.sh      Linux install (venv, launcher, autostart, file managers)
   fetch-doubletake.sh     pinned doubletake download (SHA-256) or source build
   build-omdrop-owl.sh     omdrop-owl .deb without root
-  gen_proto.sh            regenerate protobuf code
-  build-rqs-harness.sh    rquickshare peer for interop tests
+  dev/                    gen_proto.sh, rquickshare/LocalSend interop, UI smoke test
+data/                     icons (SVG, PNG, ICO), systemd user unit
 packaging/windows/        PyInstaller entry point
 tests/                    unit, loopback, interop and CLI tests
 ```

@@ -32,16 +32,19 @@ jobs:
       - name: Build MultiDrop.exe
         run: >
           pyinstaller --noconfirm --onefile --windowed --name MultiDrop
-          --icon assets/multidrop.ico
-          --add-data "assets/multidrop.png;assets"
+          --icon data/icons/multidrop.ico
+          --add-data "data/icons/multidrop.png;data/icons"
           --collect-all multidrop --collect-all zeroconf
           --hidden-import pystray._win32
           packaging/windows/launch.py
       - name: Self-test (starts Quick Share + LocalSend, checks the API)
         shell: pwsh
+        timeout-minutes: 3
         run: |
-          $p = Start-Process -FilePath dist\MultiDrop.exe -ArgumentList "--selftest" -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "self-test failed: $($p.ExitCode)" }
+          $p = Start-Process -FilePath dist\MultiDrop.exe -ArgumentList "--selftest" -PassThru
+          if (-not $p.WaitForExit(90000)) { $p.Kill(); $code = "timeout" } else { $code = $p.ExitCode }
+          Get-Content "$env:LOCALAPPDATA\multidrop\multidrop.log" -ErrorAction SilentlyContinue
+          if ($code -ne 0) { throw "self-test failed: $code" }
       - uses: actions/upload-artifact@v4
         with:
           name: MultiDrop-windows

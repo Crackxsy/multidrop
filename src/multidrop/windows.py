@@ -32,7 +32,7 @@ log = logging.getLogger("multidrop.windows")
 def _resource(name: str) -> Path:
     """Bundled file (PyInstaller unpacks to sys._MEIPASS) or the source tree."""
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
-    return base / "assets" / name
+    return base / "data" / "icons" / name
 
 
 class Service:
@@ -109,6 +109,15 @@ def _watch_offers(service: Service, notify) -> None:
         time.sleep(2)
 
 
+def _exit(code: int) -> None:
+    """Leave even if a library thread (zeroconf, executor) is still blocked:
+    a lingering thread kept MultiDrop.exe alive after quitting."""
+    logging.shutdown()
+    if sys.stdout is not None:
+        sys.stdout.flush()
+    os._exit(code)
+
+
 def _selftest(service: Service) -> int:
     status = service.api("/api/status")
     if sys.stdout is not None:          # the windowed .exe has no console
@@ -126,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
 
     log_dir = runtime_dir().parent
     log_dir.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(filename=None if args.selftest else str(log_dir / "multidrop.log"),
+    logging.basicConfig(filename=str(log_dir / "multidrop.log"),
                         level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -143,9 +152,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.selftest:
         try:
-            return _selftest(service)
-        finally:
-            service.stop()
+            code = _selftest(service)
+        except Exception as e:
+            log.exception("self-test failed: %s", e)
+            code = 1
+        service.stop()
+        _exit(code)
     if not args.no_browser:
         webbrowser.open(url)
 
@@ -182,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
     threading.Thread(target=_watch_offers, args=(service, icon.notify), daemon=True).start()
     icon.run()
     service.stop()
-    return 0
+    _exit(0)
 
 
 if __name__ == "__main__":

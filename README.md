@@ -1,141 +1,122 @@
 <p align="center"><img src="docs/banner.png" alt="MultiDrop" width="100%"></p>
 
-# MultiDrop
+<p align="center">
+  <b>AirDrop, Quick Share, LocalSend and AirPlay for Linux and Windows.</b><br>
+  Share files, your screen and audio with phones, Macs and TVs nearby.
+</p>
 
-Share files, your screen and audio with devices nearby – on Linux and Windows,
-using the protocols phones and Macs already have built in:
+<p align="center">
+  <a href="../../releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/digitaldanis/multidrop"></a>
+  <a href="../../actions/workflows/build.yml"><img alt="Build" src="https://github.com/digitaldanis/multidrop/actions/workflows/build.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
+</p>
 
-| | Linux | Windows | Other side |
+## Features
+
+| | Linux | Windows | Works with |
 |---|:---:|:---:|---|
-| **Quick Share** (send/receive, also via QR code) | ✅ | ✅ | Android, Samsung – no app needed |
-| **LocalSend** (send/receive) | ✅ | ✅ | iPhone, Android, PC with the LocalSend app |
-| **Browser download** (QR code + PIN) | ✅ | ✅ | any phone, including iPhone, no app |
-| **AirDrop** (send/receive) | ✅¹ | – | iPhone, iPad, Mac |
-| **AirPlay screen mirroring** | ✅² | – | Apple TV, Mac, AirPlay TVs |
-| **AirPlay audio** | ✅³ | – | Apple TV, HomePod, Sonos, AirPort, Mac |
+| **Quick Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung (no app) |
+| **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, PC with LocalSend |
+| **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app |
+| **AirDrop** – send & receive | ✅* | – | iPhone, iPad, Mac |
+| **AirPlay** – mirror your screen | ✅ | – | Apple TV, Mac, AirPlay TVs |
+| **AirPlay** – play audio | ✅ | – | Apple TV, HomePod, Sonos, Mac |
 
-¹ needs a supported Wi-Fi card and [omdrop-owl](https://github.com/t4t5/omdrop-owl), see below ·
-² via [doubletake](https://github.com/omarroth/doubletake) ·
-³ via PipeWire (`raop-discover`)
+\* needs a supported Wi-Fi card, see [AirDrop setup](#airdrop-setup-linux).
 
-AirDrop needs Apple's own radio link (AWDL), which can only be recreated on
-Linux with a suitable Wi-Fi card; Windows Wi-Fi drivers cannot do it.
+## Install
 
-> **Test status:** AirDrop Linux → Mac, Quick Share/LocalSend against other
-> implementations and the official LocalSend app, and the Linux desktop app are
-> tested. Quick Share with real Android/Samsung phones, AirPlay mirroring and
-> audio on real devices, and the Windows build on real hardware are not fully
-> verified yet. Samsung phones ignore the Bluetooth wake-up; use the QR code to
-> send to Samsung.
+### Windows
 
-## Windows
+Download **MultiDrop.exe** from [Releases](../../releases/latest) and run it.
+MultiDrop sits in the notification area and opens in your browser. Allow
+*Private networks* when Windows Firewall asks.
 
-Download [**MultiDrop.exe** from Releases](../../releases/latest) and run it.
-MultiDrop lives in the notification area (bottom right) and opens its interface
-in your browser. Incoming files show a notification and open the interface.
-On first start Windows Firewall asks – allow "Private networks", otherwise
-phones cannot find the PC.
-
-Received files go to `Downloads\multidrop`. From source:
-`pip install ".[windows]"` and `multidrop-windows`.
-
-## Linux
+### Linux
 
 ```bash
 git clone https://github.com/digitaldanis/multidrop.git ~/multidrop
-cd ~/multidrop
-tools/install-desktop.sh --pin     # venv, launcher, icons, autostart, file manager action
+~/multidrop/tools/install-desktop.sh --pin
 ```
 
-Works on Ubuntu/Debian, Fedora, Arch/Manjaro, openSUSE and others (Python ≥ 3.11,
-GTK ≥ 4.6, libadwaita ≥ 1.1). The script lists missing system packages with the
-right command for your distribution; it never needs root itself.
-`tools/install-desktop.sh --remove` removes everything again.
+Ubuntu/Debian, Fedora, Arch, openSUSE and others (Python ≥ 3.11, GTK 4,
+libadwaita). The installer needs no root and tells you if a system package is
+missing. Uninstall with `tools/install-desktop.sh --remove`.
 
-**The desktop app** sits in the top bar like on a Mac (KDE, XFCE, Cinnamon, MATE,
-Budgie; GNOME with the "AppIndicator and KStatusNotifierItem Support" extension,
-preinstalled on Ubuntu):
+## Using it
 
-- **Window:** nearby devices as bubbles – drop files on one or click it. The
-  **"Samsung/Android via QR code"** tile works even when a phone does not show
-  up in the search.
-- **Top bar menu:** devices, AirDrop on/off, mirror screen, play audio on …
-- **File manager:** right-click → "Send with MultiDrop" (Nautilus, Nemo,
-  Dolphin, Caja), or drop files on the dock icon.
-- **Mirror screen (AirPlay):** the "Mirror" button. First pairing: enter the code
-  shown on the TV. The installer downloads doubletake v0.5.0 (SHA-256 checked)
-  to `~/.local/lib/multidrop`. Receivers without a screen (speakers) are hidden
-  based on their own AirPlay announcement.
-- **AirPlay audio:** the "Audio" button – the chosen speaker becomes the default
-  output, so every app plays there; "This computer" switches back.
+- **Top bar menu** – nearby devices, AirDrop on/off, *Mirror screen*, *Play audio on*.
+- **Window** – drop files on a device bubble, or click it. Samsung phones that
+  don't show up: use the **QR code** tile.
+- **File manager** – right-click → *Send with MultiDrop*, or drop files on the dock icon.
+- **Receiving** – just send from your phone; MultiDrop asks before accepting.
+  Files land in `~/Downloads/multidrop`.
 
-### AirDrop on Linux
+On GNOME the top bar icon needs the *AppIndicator and KStatusNotifierItem
+Support* extension (preinstalled on Ubuntu).
 
-AirDrop uses the original radio helper from
-[omdrop-owl](https://github.com/t4t5/omdrop-owl) (OWL, AWDL in software), tested
-with MediaTek MT7925; Intel cards run there in "exclusive" mode. Once (root,
-Debian/Ubuntu):
+## AirDrop setup (Linux)
+
+AirDrop uses [omdrop-owl](https://github.com/t4t5/omdrop-owl), which recreates
+Apple's AWDL radio link in software (tested with MediaTek MT7925; Intel cards in
+exclusive mode). Install it once, then turn AirDrop on in the app:
 
 ```bash
-tools/build-omdrop-owl.sh                                   # no root, pinned upstream
+tools/build-omdrop-owl.sh
 sudo apt install ./build/airdrop/omdrop-owl_0.1.0-1_amd64.deb
 ```
 
-Then **"Turn AirDrop on"** in the app (10/30/60 minutes, password prompt) or
-`multidrop airdrop run --minutes 10 --switch-channel`.
+If your Wi-Fi isn't on channel 6, 44 or 149, MultiDrop temporarily switches to
+the same network on one of those channels and switches back afterwards – no
+router changes needed. Details: [docs/INSTALL-ROOT.md](docs/INSTALL-ROOT.md).
 
-AirDrop shares the channel with your Wi-Fi and needs channel 6, 44 or 149. If
-your Wi-Fi runs elsewhere (e.g. 6 GHz), MultiDrop asks and then moves to the
-**same network** on a suitable channel for the session (temporary NetworkManager
-profile) and back afterwards – a systemd timer restores it even after a crash.
-Nothing needs to change on the router, as long as it also broadcasts the same
-network on one of those channels. More: [INSTALL-ROOT.md](INSTALL-ROOT.md).
-
-### Command line and background service
+## Command line
 
 ```bash
-multidrop devices                                  # find devices
-multidrop send photo.jpg folder/ --to "Galaxy S24" # protocol chosen automatically
-multidrop send photo.jpg --qr                      # Quick Share via QR code
-multidrop receive                                  # receive, confirm each transfer
-multidrop share photos/                            # browser download (QR + PIN)
-multidrop ui --open                                # web interface
+multidrop devices                          # find devices
+multidrop send photo.jpg --to "Galaxy S24" # send (protocol chosen automatically)
+multidrop send photo.jpg --qr              # send via Quick Share QR code
+multidrop receive                          # receive, confirm each transfer
+multidrop share photos/                    # browser download with QR code + PIN
 ```
 
-`multidropd` is the background service (the desktop app starts it; as a
-systemd user service: `contrib/systemd/multidropd.service`). It offers a local
-API (Unix socket `$XDG_RUNTIME_DIR/multidrop/multidropd.sock`, endpoints in
-`src/multidrop/daemon/api.py`) and a web interface on `127.0.0.1` only.
-Configuration: `~/.config/multidrop/config.toml` (keys in
-`src/multidrop/config.py`).
+`multidropd` is the background service behind the apps (systemd unit in
+`data/systemd/`). Config: `~/.config/multidrop/config.toml`.
 
-## Development
+## Status
 
-```bash
-python3 -m venv .venv && .venv/bin/pip install -e ".[test]"
-.venv/bin/pytest -q
+Tested: AirDrop Linux → Mac, Quick Share and LocalSend against other
+implementations and the official LocalSend app, the Linux desktop app, the
+Windows build in CI. Not fully verified yet on real devices: Quick Share with
+Android/Samsung phones, AirPlay mirroring and audio, Windows on real hardware.
+Bug reports welcome.
+
+## Project layout
+
+```
+src/multidrop/     service, protocols, Linux desktop app, Windows tray app
+tests/             unit, loopback and interop tests
+tools/             install-desktop.sh, fetch-doubletake.sh, build-omdrop-owl.sh, dev/
+data/              icons, systemd unit
+packaging/         Windows build entry point, release notes
+docs/              architecture, protocol research, root setup
 ```
 
-Design: [ARCHITECTURE.md](ARCHITECTURE.md), protocol notes:
-[docs/RESEARCH.md](docs/RESEARCH.md). GitHub Actions
-(`.github/workflows/build.yml`) runs the tests on Linux, builds `MultiDrop.exe`
-with PyInstaller on Windows including a self-test, and publishes a release for
-tags `v*`.
+Development: `python3 -m venv .venv && .venv/bin/pip install -e ".[test]" && .venv/bin/pytest -q`.
+Design notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
+[docs/RESEARCH.md](docs/RESEARCH.md).
 
-## Thanks
+## Credits & license
 
-[NearDrop](https://github.com/grishka/NearDrop) (Quick Share protocol),
+Built on the work of [NearDrop](https://github.com/grishka/NearDrop),
 [rquickshare](https://github.com/Martichou/rquickshare),
 [LocalSend](https://github.com/localsend/localsend),
-[omdrop-owl](https://github.com/t4t5/omdrop-owl) and
-[OWL](https://github.com/seemoo-lab/owl) (AWDL),
-[OpenDrop](https://github.com/seemoo-lab/opendrop) (AirDrop protocol),
-[doubletake](https://github.com/omarroth/doubletake) (AirPlay mirroring),
-[UxPlay](https://github.com/FDH2/UxPlay).
+[omdrop-owl](https://github.com/t4t5/omdrop-owl), [OWL](https://github.com/seemoo-lab/owl),
+[OpenDrop](https://github.com/seemoo-lab/opendrop),
+[omdrop-plugin](https://github.com/brentkearney/omdrop-plugin),
+[doubletake](https://github.com/omarroth/doubletake) and
+[UxPlay](https://github.com/FDH2/UxPlay) – see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Not affiliated with Apple, Google or Samsung. AirDrop, AirPlay and Quick Share
-are trademarks of their respective owners.
-
-## License
-
-GPL-3.0-or-later, see [LICENSE](LICENSE).
+MultiDrop is licensed under [GPL-3.0-or-later](LICENSE). Not affiliated with
+Apple, Google or Samsung; AirDrop, AirPlay and Quick Share are their trademarks.

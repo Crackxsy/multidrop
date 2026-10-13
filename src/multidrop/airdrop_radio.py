@@ -27,7 +27,7 @@ class OwlRadio:
                     timeout: float = 5) -> tuple[int, str]:
         if not HELPER.is_file():
             raise TransferError("omdrop-owl is not installed: install the .deb first "
-                                "(see INSTALL-ROOT.md)")
+                                "(see docs/INSTALL-ROOT.md)")
         argv = [str(HELPER), *args]
         if privileged:
             if not shutil.which("pkexec"):

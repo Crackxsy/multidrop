@@ -5,7 +5,7 @@ Drives localsend-cli through a pseudo terminal and multidrop through its CLI.
 Discovery uses the real LAN (multicast on the default interface); transfers
 go over 127.0.0.1. Usage:
 
-    .venv/bin/python tools/localsend_interop.py ~/multidrop-research/localsend-app/cli/localsend-cli
+    .venv/bin/python tools/dev/localsend_interop.py ~/multidrop-research/localsend-app/cli/localsend-cli
 """
 
 import fcntl

@@ -94,7 +94,7 @@ class QuickShareConfig:
 
 @dataclass
 class AirDropConfig:
-    # Off by default: needs the AWDL radio (OWL, root, see INSTALL-ROOT.md).
+    # Off by default: needs the AWDL radio (OWL, root, see docs/INSTALL-ROOT.md).
     enabled: bool = False
     interface: str = "awdl0"
     port: int = 8771

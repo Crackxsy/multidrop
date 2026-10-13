@@ -1,7 +1,7 @@
 """Browser smoke test of the multidropd web UI, entirely on 127.0.0.1.
 
 Starts a daemon (no notifications, discovery only on lo) and a Quick Share
-"phone", then runs tools/ui_smoke.mjs in headless Chromium. The page and this
+"phone", then runs tools/dev/ui_smoke.mjs in headless Chromium. The page and this
 script talk over stdin/stdout markers: READY_FOR_OFFER (Quick Share offer),
 READY_FOR_MULTI (LocalSend offer of 3 files, the page accepts 2),
 READY_FOR_PIN (LocalSend receiver with a PIN), READY_FOR_RESTART (daemon
@@ -9,7 +9,7 @@ restarted, history must still be there).
 
   PLAYWRIGHT_CORE=/path/node_modules/playwright-core \
   CHROMIUM=~/.cache/ms-playwright/chromium_headless_shell-XXXX/chrome-headless-shell-linux64/chrome-headless-shell \
-  .venv/bin/python tools/ui_smoke.py [SCREENSHOT_DIR]
+  .venv/bin/python tools/dev/ui_smoke.py [SCREENSHOT_DIR]
 """
 
 import asyncio

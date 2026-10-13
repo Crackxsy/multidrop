@@ -1,7 +1,7 @@
 // Drives the web UI in headless Chromium: status, device search, drop a file
 // on a device, accept an incoming offer, accept 2 of 3 files, browser
 // download, send to a LocalSend receiver that wants a PIN, history after a
-// daemon restart. Started by tools/ui_smoke.py.
+// daemon restart. Started by tools/dev/ui_smoke.py.
 // Usage: node ui_smoke.mjs URL SCREENSHOT_DIR   (PLAYWRIGHT_CORE=path/to/playwright-core)
 import { createRequire } from "module";
 import readline from "readline";

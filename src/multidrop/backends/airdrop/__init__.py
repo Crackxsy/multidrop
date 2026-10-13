@@ -1,6 +1,8 @@
 """AirDrop backend (protocol side). Needs an AWDL interface (awdl0, provided
 by OWL as root); without it start() fails with a clear message. Everything
-above the radio is tested on loopback (tests/test_airdrop_loopback.py)."""
+above the radio is tested on loopback (tests/test_airdrop_loopback.py).
+
+Based on omdrop-plugin by Brent Kearney (MIT), see THIRD_PARTY_NOTICES.md."""
 
 from __future__ import annotations
 
@@ -109,7 +111,7 @@ class AirDropBackend(Backend):
         if addr is None:
             raise TransferError(
                 f"AirDrop: no interface {self.ad.interface} (the AWDL radio is not "
-                "running, see INSTALL-ROOT.md); AirDrop stays off")
+                "running, see docs/INSTALL-ROOT.md); AirDrop stays off")
         return addr
 
     @property
