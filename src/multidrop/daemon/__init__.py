@@ -103,9 +103,11 @@ DESKTOP_ID = "org.multidrop.Multidrop"
 def open_ui(url: str) -> None:
     """Show the UI: in the desktop app if installed (tools/install-desktop.sh),
     else in the browser. The app finds the daemon on its own."""
-    data = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
-    if not WINDOWS and (data / "applications" / f"{DESKTOP_ID}.desktop").exists() \
-            and shutil.which("gtk-launch"):
+    dirs = [os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local/share"),
+            *(os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")]
+    installed = any((Path(d) / "applications" / f"{DESKTOP_ID}.desktop").exists()
+                    for d in dirs if d)
+    if not WINDOWS and installed and shutil.which("gtk-launch"):
         try:
             subprocess.Popen(["gtk-launch", DESKTOP_ID], stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, start_new_session=True)

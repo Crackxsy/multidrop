@@ -175,6 +175,14 @@ class Services:
             return subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=log,
                                     stderr=subprocess.STDOUT, start_new_session=True)
 
+    def command(self, name: str) -> str:
+        """The venv's program in a checkout, else the installed one (.deb: /usr/bin)."""
+        local = self.venv / "bin" / name
+        if local.exists():
+            return str(local)
+        import shutil
+        return shutil.which(name) or str(local)
+
     def pid(self) -> int | None:
         return daemon_pid(self.sock)
 
@@ -227,7 +235,7 @@ class Services:
             except subprocess.TimeoutExpired:
                 self.daemon.kill()
         if self.daemon is None or self.daemon.poll() is not None:
-            self.daemon = self.spawn([str(self.venv / "bin/multidropd")], "desktop-daemon.log")
+            self.daemon = self.spawn([self.command("multidropd")], "desktop-daemon.log")
             self.daemon_started = time.time()
 
     def start_airdrop(self, minutes: int) -> None:
@@ -251,7 +259,7 @@ class Services:
         if self.daemon is not None:
             self.daemon.poll()
             self.daemon = None
-        self.session = self.spawn([str(self.venv / "bin/multidrop"), "airdrop", "run",
+        self.session = self.spawn([self.command("multidrop"), "airdrop", "run",
                                    "--minutes", str(minutes), "--switch-channel"], "desktop-airdrop.log")
         self.session_end = time.time() + minutes * 60
 
@@ -341,7 +349,8 @@ class Mirror:
             return
         binary = doubletake_bin("doubletake")
         if binary is None:
-            raise ApiError("doubletake is missing (tools/fetch-doubletake.sh)")
+            raise ApiError("doubletake is missing (run multidrop-fetch-doubletake "
+                           "or tools/fetch-doubletake.sh)")
         import shutil
         argv = [binary, "-daemonize", "-socket", str(self.sock)]
         if not shutil.which("pactl"):
@@ -1218,7 +1227,7 @@ def main(argv: list[str] | None = None) -> int:
 
             if not st.mirror_ok:
                 note = Gtk.Label(label="doubletake is missing.\nInstall it with\n"
-                                       "tools/fetch-doubletake.sh", xalign=0, margin_start=6)
+                                       "multidrop-fetch-doubletake", xalign=0, margin_start=6)
                 note.add_css_class("dim-label")
                 self.mirror_list.append(note)
                 return

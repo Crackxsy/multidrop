@@ -50,9 +50,27 @@ jobs:
           name: MultiDrop-windows
           path: dist/MultiDrop.exe
 
+  deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build multidrop_*_all.deb
+        run: packaging/deb/build-deb.sh dist
+      - name: Install it and check the programs start
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ./dist/multidrop_*_all.deb
+          multidrop --version
+          multidropd --help >/dev/null
+          python3 -I -c "import sys; sys.path[:0]=['/usr/lib/multidrop','/usr/lib/multidrop/vendor']; import multidrop.daemon, aiohttp, google.protobuf; print('aiohttp', aiohttp.__version__)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MultiDrop-deb
+          path: dist/*.deb
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test-linux, windows]
+    needs: [test-linux, windows, deb]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,6 +78,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install build && python -m build
+      - uses: actions/download-artifact@v4
+        with:
+          name: MultiDrop-deb
+          path: dist
       - uses: actions/download-artifact@v4
         with:
           name: MultiDrop-windows
@@ -75,3 +97,36 @@ jobs:
           gh release create "$GITHUB_REF_NAME" dist/*
           --title "MultiDrop $GITHUB_REF_NAME"
           --notes-file packaging/RELEASE_NOTES.md
+
+  apt-repo:
+    # Signed APT repository on GitHub Pages (gh-pages branch):
+    #   sudo apt install multidrop   after adding it once, see README.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - uses: actions/download-artifact@v4
+        with:
+          name: MultiDrop-deb
+          path: dist
+      - name: Update and sign the repository
+        env:
+          APT_GPG_KEY: ${{ secrets.APT_GPG_KEY }}
+          APT_KEY_ID: ${{ secrets.APT_KEY_ID }}
+        run: |
+          export GNUPGHOME=$(mktemp -d)
+          echo "$APT_GPG_KEY" | gpg --batch --import
+          packaging/deb/update-apt-repo.sh site dist/*.deb
+      - name: Publish
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "APT repository: ${GITHUB_REF_NAME}"
+          git push

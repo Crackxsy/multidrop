@@ -32,16 +32,33 @@ Download **MultiDrop.exe** from [Releases](../../releases/latest) and run it.
 MultiDrop sits in the notification area and opens in your browser. Allow
 *Private networks* when Windows Firewall asks.
 
-### Linux
+### Ubuntu / Debian (apt)
+
+Ubuntu 24.04+ and Debian 13+. Add the repository once, then install and update
+with apt:
+
+```bash
+curl -fsSL https://digitaldanis.github.io/multidrop/multidrop-archive-keyring.gpg \
+  | sudo tee /usr/share/keyrings/multidrop-archive-keyring.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/multidrop-archive-keyring.gpg] https://digitaldanis.github.io/multidrop stable main" \
+  | sudo tee /etc/apt/sources.list.d/multidrop.list
+sudo apt update && sudo apt install multidrop
+```
+
+Or download `multidrop_*_all.deb` from [Releases](../../releases/latest) and run
+`sudo apt install ./multidrop_*_all.deb`. For AirPlay mirroring run
+`multidrop-fetch-doubletake` once.
+
+### Other Linux distributions
 
 ```bash
 git clone https://github.com/digitaldanis/multidrop.git ~/multidrop
 ~/multidrop/tools/install-desktop.sh --pin
 ```
 
-Ubuntu/Debian, Fedora, Arch, openSUSE and others (Python ≥ 3.11, GTK 4,
-libadwaita). The installer needs no root and tells you if a system package is
-missing. Uninstall with `tools/install-desktop.sh --remove`.
+Fedora, Arch, openSUSE and others (Python ≥ 3.11, GTK 4, libadwaita). The
+installer needs no root and tells you if a system package is missing. Uninstall
+with `tools/install-desktop.sh --remove`.
 
 ## Using it
 
@@ -98,7 +115,7 @@ src/multidrop/     service, protocols, Linux desktop app, Windows tray app
 tests/             unit, loopback and interop tests
 tools/             install-desktop.sh, fetch-doubletake.sh, build-omdrop-owl.sh, dev/
 data/              icons, systemd unit
-packaging/         Windows build entry point, release notes
+packaging/         .deb and APT repository, Windows build, release notes
 docs/              architecture, protocol research, root setup
 ```
 

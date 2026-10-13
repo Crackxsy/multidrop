@@ -68,6 +68,13 @@ Pillow (MIT-CMU), PyInstaller bootloader (GPL-2.0 with bootloader exception).
 Their license texts are available from the respective projects; the complete
 source of MultiDrop is in this repository.
 
+## Bundled in the .deb package
+
+Pure-Python copies in `/usr/lib/multidrop/vendor`: protobuf (BSD-3-Clause),
+aiohttp, multidict, yarl, frozenlist, propcache, aiosignal, aiohappyeyeballs
+(Apache-2.0); their license files are kept in the `*.dist-info` directories.
+All other libraries come from the distribution.
+
 ## Trademarks
 
 AirDrop and AirPlay are trademarks of Apple Inc., Quick Share of Google LLC /
