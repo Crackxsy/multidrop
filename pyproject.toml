@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multidrop"
+version = "0.1.0"
+description = "Nearby sharing for Linux and Windows: AirDrop, Quick Share, LocalSend, AirPlay"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+dependencies = [
+    "aiohttp>=3.9",
+    "cryptography>=41",
+    "protobuf>=7.35",
+    "zeroconf>=0.130",
+    "dbus-fast>=2.0; sys_platform == 'linux'",
+    "segno>=1.5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-asyncio>=0.23"]
+windows = ["pystray>=0.19", "pillow>=10"]
+
+[project.scripts]
+multidrop = "multidrop.cli:main"
+multidropd = "multidrop.daemon:main"
+multidrop-windows = "multidrop.windows:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+multidrop = ["daemon/web/*", "backends/quickshare/proto/*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,74 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[test]"
+      - run: pytest -q
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ".[windows]" pyinstaller
+      - name: Build MultiDrop.exe
+        run: >
+          pyinstaller --noconfirm --onefile --windowed --name MultiDrop
+          --icon assets/multidrop.ico
+          --add-data "assets/multidrop.png;assets"
+          --collect-all multidrop --collect-all zeroconf
+          --hidden-import pystray._win32
+          packaging/windows/launch.py
+      - name: Self-test (starts Quick Share + LocalSend, checks the API)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\MultiDrop.exe -ArgumentList "--selftest" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "self-test failed: $($p.ExitCode)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MultiDrop-windows
+          path: dist/MultiDrop.exe
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test-linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build && python -m build
+      - uses: actions/download-artifact@v4
+        with:
+          name: MultiDrop-windows
+          path: dist
+      - name: Linux bundle
+        run: |
+          name=MultiDrop-linux-${GITHUB_REF_NAME}
+          git archive --format=tar.gz --prefix="$name/" -o "dist/$name.tar.gz" HEAD
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --title "MultiDrop $GITHUB_REF_NAME"
+          --notes-file packaging/RELEASE_NOTES.md
