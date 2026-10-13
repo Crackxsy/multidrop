@@ -59,7 +59,8 @@ WEB_PORT = web.AppKey("web_port", list)   # [port], set once the TCP site runs
 
 def _via_unix_socket(request: web.Request) -> bool:
     sock = request.transport.get_extra_info("socket") if request.transport else None
-    return sock is not None and sock.family == socket.AF_UNIX
+    unix = getattr(socket, "AF_UNIX", None)     # missing on Windows
+    return sock is not None and unix is not None and sock.family == unix
 
 
 def _json_error(status: int, message: str) -> web.Response:

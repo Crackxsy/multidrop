@@ -41,3 +41,13 @@ def test_windows_entry_selftest(tmp_path, monkeypatch, make_config):
         assert windows._selftest(service) == 0
     finally:
         service.stop()
+
+
+async def test_api_without_af_unix(monkeypatch, make_config, tmp_path):
+    """Windows' socket module has no AF_UNIX (seen in CI: HTTP 500)."""
+    import socket as socket_mod
+
+    monkeypatch.delattr(socket_mod, "AF_UNIX")
+    from multidrop.daemon import api
+    req = type("R", (), {"transport": type("T", (), {"get_extra_info": lambda self, k: object()})()})()
+    assert api._via_unix_socket(req) is False

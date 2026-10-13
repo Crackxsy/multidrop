@@ -185,7 +185,8 @@ async def run(cfg: Config, *, notifications: bool | None = None,
         with os.fdopen(fd, "w") as f:
             f.write(url_holder[0] + "\n")
         log.info("web UI: http://127.0.0.1:%d/ (URL with token in %s)", port, url_file)
-        log.info("API socket: %s", sock)
+        if not WINDOWS:
+            log.info("API socket: %s", sock)
         if started is not None and not started.done():
             started.set_result(url_holder[0])
         await stop.wait()
