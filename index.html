@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MultiDrop APT repository</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:46rem;margin:3rem auto;padding:0 1rem;color:#1d1d1f}
+pre{background:#f2f4f8;padding:1rem;border-radius:8px;overflow-x:auto}a{color:#0a64d8}</style></head>
+<body>
+<h1>MultiDrop APT repository</h1>
+<p>Packages for <a href="https://github.com/digitaldanis/multidrop">MultiDrop</a> – AirDrop, Quick Share,
+LocalSend and AirPlay for Linux. Ubuntu 24.04+ and Debian 13+.</p>
+<pre>curl -fsSL https://digitaldanis.github.io/multidrop/multidrop-archive-keyring.gpg \
+  | sudo tee /usr/share/keyrings/multidrop-archive-keyring.gpg &gt;/dev/null
+echo "deb [signed-by=/usr/share/keyrings/multidrop-archive-keyring.gpg] https://digitaldanis.github.io/multidrop stable main" \
+  | sudo tee /etc/apt/sources.list.d/multidrop.list
+sudo apt update
+sudo apt install multidrop</pre>
+<p>Signing key fingerprint: <code>93249FD950BF046802D087C2FE64BBDE5A1E946F</code></p>
+</body></html>
