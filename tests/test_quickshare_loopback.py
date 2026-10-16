@@ -266,6 +266,7 @@ def test_endpoint_info_and_names():
 
 
 def test_ble_service_data_format():
+    pytest.importorskip("dbus_fast")      # BlueZ over D-Bus, Linux only
     from multidrop.backends.quickshare import ble
     data = ble.service_data()
     # NearDrop PROTOCOL.md / rquickshare: fc128e0142, 9 zero bytes, 10 random bytes.
