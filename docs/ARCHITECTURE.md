@@ -58,7 +58,11 @@ safety rules for AirDrop, Quick Share and LocalSend.
   bubbles with drag and drop, AirDrop sessions, AirPlay mirroring and audio.
   Fallbacks for GTK ≥ 4.6 / libadwaita ≥ 1.1.
 - **Windows app** (`windows.py`): the service on a thread, a pystray tray icon,
-  the web UI in the browser, Windows notifications for incoming offers. Built
+  the web UI in the browser, Windows notifications for incoming offers.
+  `winshell.py`: per-user autostart (HKCU Run key) and the Explorer "Send to"
+  shortcut; a second start with files hands them to the running instance
+  (`/api/selection`), where the UI sends them on a click. The CLI reaches the
+  service over 127.0.0.1 with the token (no Unix socket on Windows). Built
   into `MultiDrop.exe` with PyInstaller by GitHub Actions.
 - Configuration: `~/.config/multidrop/config.toml`; downloads to
   `~/Downloads/multidrop`; keys and identities under
@@ -122,6 +126,7 @@ src/multidrop/
   daemon/                 multidropd: service.py, api.py, client.py, notify.py, web/
   desktop.py              Linux desktop app (GTK 4, tray, AirDrop, AirPlay)
   windows.py              Windows tray app
+  winshell.py             Windows autostart and Explorer "Send to"
   airdrop_radio.py        timed AirDrop sessions with omdrop-owl
   wifi_channel.py         temporary Wi-Fi channel move for AirDrop
   airplay_scan.py         AirPlay receiver capabilities from mDNS (features bits)
@@ -133,7 +138,8 @@ tools/
   install-desktop.sh      Linux install (venv, launcher, autostart, file managers)
   fetch-doubletake.sh     pinned doubletake download (SHA-256) or source build
   build-omdrop-owl.sh     omdrop-owl .deb without root
-  dev/                    gen_proto.sh, rquickshare/LocalSend interop, UI smoke test
+  dev/                    gen_proto.sh, rquickshare/LocalSend interop, UI smoke test,
+                          Windows click test (win_click_test.py)
 data/                     icons (SVG, PNG, ICO), systemd user unit
 packaging/windows/        PyInstaller entry point
 tests/                    unit, loopback, interop and CLI tests

@@ -31,6 +31,9 @@
 Download **MultiDrop.exe** from [Releases](../../releases/latest) and run it.
 MultiDrop sits in the notification area and opens in your browser. Allow
 *Private networks* when Windows Firewall asks.
+In the tray menu you can turn on *Start with Windows* and *Show in "Send to"
+menu*. Then right-click files in Explorer → *Send to* → *MultiDrop* and click a
+device.
 
 ### Ubuntu / Debian (apt)
 

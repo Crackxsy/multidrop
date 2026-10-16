@@ -24,6 +24,8 @@ Endpoints:
   GET|POST|DELETE /api/share       browser download (LocalSend download API):
                                    status / start (like send, no target; pin,
                                    no_pin, minutes, address) / stop
+  GET|POST|DELETE /api/selection   files waiting to be sent from the UI: list /
+                                   add {"paths": [absolute paths]} / clear
   POST /api/send                   JSON {"target", "paths", "text", "pin"} or
                                    multipart: fields target (JSON), text, pin,
                                    and per file a "path" field then a "file" part
@@ -317,6 +319,28 @@ def _share_options(opts: dict) -> dict:
     return {"pin": None if no_pin else pin, "minutes": minutes, "address": address}
 
 
+async def selection_get(request: web.Request) -> web.Response:
+    return web.json_response({"paths": request.app[DAEMON].selection})
+
+
+async def selection_add(request: web.Request) -> web.Response:
+    d = request.app[DAEMON]
+    body = await _json_body(request)
+    raw = body.get("paths")
+    if not isinstance(raw, list) or not raw:
+        return _json_error(400, "paths: a non-empty list")
+    paths = [Path(str(p)).expanduser() for p in raw]
+    if not all(p.is_absolute() and p.exists() for p in paths):
+        return _json_error(400, "paths must be existing absolute paths")
+    d.select(paths)
+    return web.json_response({"paths": d.selection})
+
+
+async def selection_clear(request: web.Request) -> web.Response:
+    request.app[DAEMON].clear_selection()
+    return web.json_response({"paths": []})
+
+
 def build_app(daemon: Daemon, token: str) -> web.Application:
     app = web.Application(middlewares=[guard])
     app[DAEMON] = daemon
@@ -342,5 +366,8 @@ def build_app(daemon: Daemon, token: str) -> web.Application:
         web.get("/api/share", share_get),
         web.post("/api/share", share_start),
         web.delete("/api/share", share_stop),
+        web.get("/api/selection", selection_get),
+        web.post("/api/selection", selection_add),
+        web.delete("/api/selection", selection_clear),
     ])
     return app

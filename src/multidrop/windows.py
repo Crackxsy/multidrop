@@ -4,7 +4,9 @@ Quick Share and LocalSend work as on Linux. AirDrop needs Apple's AWDL radio
 link, which Windows Wi-Fi drivers cannot provide, and AirPlay mirroring uses
 Linux screen capture, so neither is part of the Windows build.
 
-Built into MultiDrop.exe by packaging/windows/multidrop.spec (GitHub Actions).
+Built into MultiDrop.exe by GitHub Actions (.github/workflows/build.yml).
+`MultiDrop.exe FILE...` (Explorer's "Send to") hands the files to the running
+instance and shows them in the UI to pick a device.
 `MultiDrop.exe --selftest` starts the service, checks its API and exits.
 """
 
@@ -15,6 +17,7 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -22,8 +25,9 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from multidrop import daemon
+from multidrop import daemon, winshell
 from multidrop.config import Config, runtime_dir
+from multidrop.daemon.api import TOKEN_HEADER
 
 APP_NAME = "MultiDrop"
 log = logging.getLogger("multidrop.windows")
@@ -33,6 +37,17 @@ def _resource(name: str) -> Path:
     """Bundled file (PyInstaller unpacks to sys._MEIPASS) or the source tree."""
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
     return base / "data" / "icons" / name
+
+
+def api(url: str, path: str, body: dict | None = None, method: str | None = None):
+    """Call the service's API with the token from its UI URL."""
+    base, _, token = url.partition("/#t=")
+    data = None if body is None else json.dumps(body).encode()
+    req = urllib.request.Request(base.rstrip("/") + path, data=data, method=method,
+                                 headers={TOKEN_HEADER: token,
+                                          "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return json.loads(r.read())
 
 
 class Service:
@@ -82,12 +97,8 @@ class Service:
             self.loop.call_soon_threadsafe(self.stop_event.set)
         self.thread.join(10)
 
-    def api(self, path: str):
-        base, _, token = self.url.partition("/#t=")
-        req = urllib.request.Request(base.rstrip("/") + path,
-                                     headers={"X-Multidrop-Token": token})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return json.loads(r.read())
+    def api(self, path: str, body: dict | None = None, method: str | None = None):
+        return api(self.url, path, body, method)
 
 
 def _watch_offers(service: Service, notify) -> None:
@@ -131,7 +142,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--config", help="config file")
     p.add_argument("--no-browser", action="store_true", help="don't open the UI at start")
     p.add_argument("--selftest", action="store_true", help="start, check the API, exit")
+    p.add_argument("paths", nargs="*", help="files to send (Explorer's \"Send to\")")
     args = p.parse_args(argv)
+    paths = [str(Path(x).resolve()) for x in args.paths]
 
     log_dir = runtime_dir().parent
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -144,11 +157,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         url = service.start()
     except daemon.AlreadyRunning:
-        # Second start (e.g. from the Start menu): show the running one.
+        # Second start (Start menu, "Send to"): hand over and show the running one.
         try:
-            webbrowser.open((runtime_dir() / "url").read_text().strip())
-        except OSError:
-            pass
+            url = (runtime_dir() / "url").read_text().strip()
+            if paths:
+                api(url, "/api/selection", {"paths": paths})
+            webbrowser.open(url)
+        except (OSError, ValueError) as e:
+            log.warning("handing over to the running instance failed: %s", e)
         return 0
     if args.selftest:
         try:
@@ -158,7 +174,12 @@ def main(argv: list[str] | None = None) -> int:
             code = 1
         service.stop()
         _exit(code)
-    if not args.no_browser:
+    if paths:
+        try:
+            service.api("/api/selection", {"paths": paths})
+        except (OSError, ValueError) as e:
+            log.warning("files from the command line: %s", e)
+    if paths or not args.no_browser:
         webbrowser.open(url)
 
     try:
@@ -185,10 +206,27 @@ def main(argv: list[str] | None = None) -> int:
     def quit_app(icon, item=None):
         icon.stop()
 
+    def toggle(enabled, switch):
+        def action(icon, item):
+            try:
+                switch(not enabled())
+            except (OSError, subprocess.SubprocessError) as e:
+                log.warning("%s: %s", item.text, e)
+                icon.notify(f"Could not change \"{item.text}\"", APP_NAME)
+        return action
+
     icon = pystray.Icon(APP_NAME, Image.open(_resource("multidrop.png")), APP_NAME,
                         menu=pystray.Menu(
                             pystray.MenuItem(f"Open {APP_NAME}", open_ui, default=True),
                             pystray.MenuItem("Received files", open_downloads),
+                            pystray.Menu.SEPARATOR,
+                            pystray.MenuItem("Start with Windows",
+                                             toggle(winshell.autostart_enabled,
+                                                    winshell.set_autostart),
+                                             checked=lambda item: winshell.autostart_enabled()),
+                            pystray.MenuItem("Show in \"Send to\" menu",
+                                             toggle(winshell.sendto_enabled, winshell.set_sendto),
+                                             checked=lambda item: winshell.sendto_enabled()),
                             pystray.Menu.SEPARATOR,
                             pystray.MenuItem("Quit", quit_app)))
     threading.Thread(target=_watch_offers, args=(service, icon.notify), daemon=True).start()
