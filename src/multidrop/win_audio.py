@@ -49,7 +49,10 @@ class AirPlayAudio:
         self._lock = threading.Lock()
 
     def _run(self, coro, timeout: float = 20):
-        return asyncio.run_coroutine_threadsafe(coro, self.loop).result(timeout)
+        """Run `coro` on the service loop; on timeout it is cancelled there too,
+        so a receiver that stops answering leaves no half-started stream."""
+        return asyncio.run_coroutine_threadsafe(
+            asyncio.wait_for(coro, timeout), self.loop).result(timeout + 5)
 
     def scan(self, timeout: float = 3.0) -> None:
         self.receivers = self._run(raop.discover(timeout))

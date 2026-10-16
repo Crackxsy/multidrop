@@ -281,3 +281,27 @@ def test_airplay_audio_controller():
     finally:
         asyncio.run_coroutine_threadsafe(receiver.close(), loop).result(5)
         loop.call_soon_threadsafe(loop.stop)
+
+
+def test_airplay_audio_timeout_cancels_on_the_loop():
+    """A receiver that never answers: the call times out and the coroutine is
+    cancelled on the service loop instead of running on."""
+    import threading
+
+    from multidrop.win_audio import AirPlayAudio
+    loop = asyncio.new_event_loop()
+    threading.Thread(target=loop.run_forever, daemon=True).start()
+    cancelled = threading.Event()
+
+    async def hang():
+        try:
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+    try:
+        with pytest.raises(TimeoutError):
+            AirPlayAudio(loop)._run(hang(), timeout=0.2)
+        assert cancelled.wait(2)
+    finally:
+        loop.call_soon_threadsafe(loop.stop)
