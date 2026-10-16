@@ -1,6 +1,7 @@
 """MultiDrop for Windows: background service, tray icon, UI in the browser.
 
-Quick Share and LocalSend work as on Linux. AirDrop needs Apple's AWDL radio
+Quick Share and LocalSend work as on Linux; the tray menu plays the PC's
+audio on AirPlay speakers (win_audio.py). AirDrop needs Apple's AWDL radio
 link, which Windows Wi-Fi drivers cannot provide, and AirPlay mirroring uses
 Linux screen capture, so neither is part of the Windows build.
 
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.util
 import json
 import logging
 import os
@@ -206,6 +208,43 @@ def main(argv: list[str] | None = None) -> int:
     def quit_app(icon, item=None):
         icon.stop()
 
+    def background(fn, *args):
+        """Slow actions (network) off the tray thread; errors as a notification."""
+        def run():
+            try:
+                fn(*args)
+            except Exception as e:
+                log.warning("AirPlay: %s", e)
+                icon.notify(f"AirPlay: {e}", APP_NAME)
+        threading.Thread(target=run, daemon=True).start()
+
+    audio = None
+    if importlib.util.find_spec("soundcard") is not None:
+        from multidrop import win_audio
+        audio = win_audio.AirPlayAudio(service.loop, on_change=lambda: icon.update_menu())
+
+    def speaker_item(r):
+        return pystray.MenuItem(r.name if r.supported else f"{r.name} (not supported)",
+                                lambda: background(audio.play, r), enabled=r.supported,
+                                checked=lambda item: audio.current is r, radio=True)
+
+    def speaker_items():
+        yield pystray.MenuItem("This computer", lambda: background(audio.stop),
+                               checked=lambda item: audio.current is None, radio=True)
+        yield from (speaker_item(r) for r in audio.receivers)
+        yield pystray.Menu.SEPARATOR
+        yield pystray.MenuItem("Search for speakers", lambda: background(audio.scan))
+
+    def volume_item(pct):
+        return pystray.MenuItem(f"{pct} %", lambda: background(audio.set_volume, pct / 100),
+                                checked=lambda item: round(audio.volume * 100) == pct, radio=True)
+
+    audio_menu = () if audio is None else (
+        pystray.MenuItem("Play audio on", pystray.Menu(speaker_items)),
+        pystray.MenuItem("AirPlay volume", pystray.Menu(lambda: map(volume_item, (25, 50, 75, 100))),
+                         enabled=lambda item: audio.current is not None),
+        pystray.Menu.SEPARATOR)
+
     def toggle(enabled, switch):
         def action(icon, item):
             try:
@@ -220,6 +259,7 @@ def main(argv: list[str] | None = None) -> int:
                             pystray.MenuItem(f"Open {APP_NAME}", open_ui, default=True),
                             pystray.MenuItem("Received files", open_downloads),
                             pystray.Menu.SEPARATOR,
+                            *audio_menu,
                             pystray.MenuItem("Start with Windows",
                                              toggle(winshell.autostart_enabled,
                                                     winshell.set_autostart),
@@ -230,7 +270,11 @@ def main(argv: list[str] | None = None) -> int:
                             pystray.Menu.SEPARATOR,
                             pystray.MenuItem("Quit", quit_app)))
     threading.Thread(target=_watch_offers, args=(service, icon.notify), daemon=True).start()
+    if audio is not None:
+        background(audio.scan)
     icon.run()
+    if audio is not None:
+        audio.stop()
     service.stop()
     _exit(0)
 

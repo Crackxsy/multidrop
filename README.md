@@ -20,9 +20,12 @@
 | **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app |
 | **AirDrop** – send & receive | ✅* | – | iPhone, iPad, Mac |
 | **AirPlay** – mirror your screen | ✅ | – | Apple TV, Mac, AirPlay TVs |
-| **AirPlay** – play audio | ✅ | – | Apple TV, HomePod, Sonos, Mac |
+| **AirPlay** – play audio | ✅ | ✅† | Apple TV, HomePod, Sonos, Mac |
 
 \* needs a supported Wi-Fi card, see [AirDrop setup](#airdrop-setup-linux).
+
+† tray menu *Play audio on*; receivers that accept unencrypted or RSA AirPlay 1
+streams without a password (others are listed as not supported).
 
 ## Install
 
@@ -110,7 +113,7 @@ multidrop share photos/                    # browser download with QR code + PIN
 
 Tested: AirDrop Linux → Mac, Quick Share and LocalSend against other
 implementations and the official LocalSend app, the Linux desktop app, the
-Windows build in CI. Not fully verified yet on real devices: Quick Share with
+Windows build in CI, Windows AirPlay audio against shairport-sync. Not fully verified yet on real devices: Quick Share with
 Android/Samsung phones, AirPlay mirroring and audio, Windows on real hardware.
 Bug reports welcome.
 

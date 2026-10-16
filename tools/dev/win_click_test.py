@@ -7,7 +7,8 @@ window) and a simulated "phone" (multidrop receive). Then:
   1. Explorer's "Send to": a second start with a file hands it over
   2. web UI (headless Chromium): the file is listed, a click on the phone sends it
   3. tray menu: "Show in "Send to" menu" on and off (shortcut in the temp profile)
-  4. tray menu: "Quit" ends the app
+  4. tray menu: "Play audio on" opens the AirPlay speaker list
+  5. tray menu: "Quit" ends the app
 
 The tray menu is opened with the message Explorer sends on a right-click on
 the icon, the entries are clicked through UI Automation (the mouse is not
@@ -155,6 +156,15 @@ web_port = 0
         tray_menu_item(app.pid, 'Show in "Send to" menu').invoke()
         wait(lambda: not link.exists(), "Send to shortcut removed")
         step('tray: "Send to" entry switched on and off')
+
+        from pywinauto import Desktop
+        from pywinauto.keyboard import send_keys
+        tray_menu_item(app.pid, "Play audio on").expand()
+        wait(lambda: any(w.descendants(title="This computer")
+                         for w in Desktop(backend="uia").windows(class_name="#32768")),
+             "AirPlay speaker submenu", 10)
+        send_keys("{ESC}{ESC}")
+        step('tray: "Play audio on" lists the speakers')
 
         tray_menu_item(app.pid, "Quit").invoke()
         assert app.wait(20) == 0, f"exit code {app.returncode}"

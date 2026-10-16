@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: AirPlay receiver for the RAOP interop test
+        run: sudo apt-get install -y -qq shairport-sync
       - run: pip install -e ".[test]"
       - run: pytest -q
 
@@ -44,7 +46,7 @@ jobs:
           pyinstaller --noconfirm --onefile --windowed --name MultiDrop
           --icon data/icons/multidrop.ico
           --add-data "data/icons/multidrop.png;data/icons"
-          --collect-all multidrop --collect-all zeroconf
+          --collect-all multidrop --collect-all zeroconf --collect-all soundcard
           --hidden-import pystray._win32
           packaging/windows/launch.py
       - name: Self-test (starts Quick Share + LocalSend, checks the API)
