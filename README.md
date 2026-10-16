@@ -28,10 +28,13 @@
 
 ### Windows
 
-Download **MultiDrop.exe** from [Releases](../../releases/latest) and run it.
+Download **MultiDrop-Setup.exe** from [Releases](../../releases/latest) and run
+it: it installs for your user only (no admin rights) with a Start menu entry
+and, if you like, *Send to* and *Start with Windows*; uninstall in *Settings →
+Apps*. Or run the portable **MultiDrop.exe** without installing.
+
 MultiDrop sits in the notification area and opens in your browser. Allow
-*Private networks* when Windows Firewall asks.
-In the tray menu you can turn on *Start with Windows* and *Show in "Send to"
+*Private networks* when Windows Firewall asks. In the tray menu you can turn on *Start with Windows* and *Show in "Send to"
 menu*. Then right-click files in Explorer → *Send to* → *MultiDrop* and click a
 device.
 
