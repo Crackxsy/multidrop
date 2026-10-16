@@ -508,7 +508,8 @@ def _utf8_output() -> None:
     """Windows pipes default to the ANSI code page, which can't encode the
     terminal QR code and crashes the command."""
     for stream in (sys.stdout, sys.stderr):
-        if stream is not None and hasattr(stream, "reconfigure")                 and (stream.encoding or "").lower().replace("-", "") != "utf8":
+        if (stream is not None and hasattr(stream, "reconfigure")
+                and (stream.encoding or "").lower().replace("-", "") != "utf8"):
             stream.reconfigure(encoding="utf-8", errors="replace")
 
 
