@@ -24,7 +24,7 @@
 
 \* needs a supported Wi-Fi card, see [AirDrop setup](#airdrop-setup-linux).
 
-† tray menu *Play audio on*; receivers that accept unencrypted or RSA AirPlay 1
+† in the window (*Play this PC's sound on a speaker*) or the tray menu; receivers that accept unencrypted or RSA AirPlay 1
 streams without a password (others are listed as not supported).
 
 ## Install
@@ -116,18 +116,20 @@ multidrop share photos/                    # browser download with QR code + PIN
 
 Tested: AirDrop Linux → Mac, Quick Share and LocalSend against other
 implementations and the official LocalSend app, the Linux desktop app, the
-Windows build in CI, Windows AirPlay audio against shairport-sync. Not fully verified yet on real devices: Quick Share with
-Android/Samsung phones, AirPlay mirroring and audio, Windows on real hardware.
+Windows build, installer and app window in CI, Windows AirPlay audio against
+shairport-sync. Not fully verified yet on real devices: Quick Share with
+Android/Samsung phones, AirPlay mirroring and audio (no real Apple TV, HomePod
+or Sonos yet), Windows on real hardware.
 Bug reports welcome.
 
 ## Project layout
 
 ```
-src/multidrop/     service, protocols, Linux desktop app, Windows tray app
+src/multidrop/     service, protocols, Linux desktop app, Windows app
 tests/             unit, loopback and interop tests
 tools/             install-desktop.sh, fetch-doubletake.sh, build-omdrop-owl.sh, dev/
 data/              icons, systemd unit
-packaging/         .deb and APT repository, Windows build, release notes
+packaging/         .deb and APT repository, Windows build and installer, release notes
 docs/              architecture, protocol research, root setup
 ```
 

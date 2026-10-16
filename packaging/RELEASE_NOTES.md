@@ -4,7 +4,9 @@ Share files, your screen and audio with devices nearby – Linux and Windows.
 
 **Windows:** run `MultiDrop-Setup.exe` (per-user install, no admin rights) or
 the portable `MultiDrop.exe` (Quick Share, LocalSend, browser download,
-Explorer "Send to"). On first start allow Windows Firewall for private networks.
+Explorer "Send to", AirPlay audio to speakers). MultiDrop opens in its own
+window and keeps receiving in the notification area when you close it. On
+first start allow Windows Firewall for private networks.
 
 **Ubuntu/Debian:** `sudo apt install multidrop` after adding the APT repository
 (see README), or `sudo apt install ./multidrop_*_all.deb`.

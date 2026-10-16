@@ -66,8 +66,10 @@ safety rules for AirDrop, Quick Share and LocalSend.
   (`/api/selection`), where the UI sends them on a click. The CLI reaches the
   service over 127.0.0.1 with the token (no Unix socket on Windows).
   AirPlay audio: `raop.py` speaks RAOP (AirPlay 1) itself, `win_audio.py`
-  records the default output with WASAPI loopback (tray *Play audio on*). Built
-  into `MultiDrop.exe` with PyInstaller by GitHub Actions.
+  records the default output with WASAPI loopback (window or tray *Play audio
+  on*). Built into `MultiDrop.exe` with PyInstaller by GitHub Actions, and into
+  the per-user installer `MultiDrop-Setup.exe` with Inno Setup
+  (`packaging/windows/multidrop.iss`, checked by `test-installer.ps1`).
 - Configuration: `~/.config/multidrop/config.toml`; downloads to
   `~/Downloads/multidrop`; keys and identities under
   `~/.local/share/multidrop/<protocol>/` (mode 0600).
@@ -129,7 +131,8 @@ src/multidrop/
   cli.py, cli_daemon.py   multidrop devices|send|receive|share|info|ui|airdrop
   daemon/                 multidropd: service.py, api.py, client.py, notify.py, web/
   desktop.py              Linux desktop app (GTK 4, tray, AirDrop, AirPlay)
-  windows.py              Windows tray app
+  windows.py              Windows app (service, tray icon)
+  win_window.py           Windows app window (WebView2) and its desktop API
   winshell.py             Windows autostart and Explorer "Send to"
   raop.py, win_audio.py   AirPlay audio sender (RAOP) and Windows loopback capture
   airdrop_radio.py        timed AirDrop sessions with omdrop-owl
@@ -144,8 +147,8 @@ tools/
   fetch-doubletake.sh     pinned doubletake download (SHA-256) or source build
   build-omdrop-owl.sh     omdrop-owl .deb without root
   dev/                    gen_proto.sh, rquickshare/LocalSend interop, UI smoke test,
-                          Windows click test (win_click_test.py)
+                          Windows click test (win_click_test.py, run_on_hidden_desktop.py)
 data/                     icons (SVG, PNG, ICO), systemd user unit
-packaging/windows/        PyInstaller entry point
+packaging/windows/        PyInstaller entry point, Inno Setup installer and its test
 tests/                    unit, loopback, interop and CLI tests
 ```
