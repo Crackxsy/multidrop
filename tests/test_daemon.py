@@ -298,6 +298,19 @@ async def test_selection_through_api(daemon, tmp_path):
     assert [e["count"] for e in events] == [1, 1, 0]
 
 
+async def test_history_since(daemon):
+    """?since=SEQ returns only newer events (the Windows app polls with it)."""
+    _, _, sess = daemon
+    async with sess.post("/api/show") as r:
+        assert r.status == 200
+    events = (await get(sess, "/api/history"))[1]
+    last = events[-1]["seq"]
+    assert (await get(sess, f"/api/history?since={last}"))[1] == []
+    newer = (await get(sess, f"/api/history?since={last - 1}"))[1]
+    assert [e["seq"] for e in newer] == [last]
+    assert (await get(sess, "/api/history?since=x"))[0] == 400
+
+
 async def test_share_through_api(daemon):
     cfg, _, sess = daemon
     form = aiohttp.FormData()

@@ -117,10 +117,8 @@ def _watch_events(service: Service, notify, show) -> None:
     while True:
         time.sleep(1)
         try:
-            for e in service.api("/api/history"):
-                if e["seq"] <= last:
-                    continue
-                last = e["seq"]
+            for e in service.api(f"/api/history?since={last}"):   # only what is new
+                last = max(last, e["seq"])
                 if e["event"] == "offer":
                     offer = e.get("offer") or {}
                     count = len(offer.get("files") or [])

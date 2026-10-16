@@ -17,7 +17,7 @@ Endpoints:
   GET  /api/offers                 pending incoming offers
   POST /api/offers/{id}            {"accept": true|false, "files": [ids]?}; files
                                    only where the offer's "partial" is not "none"
-  GET  /api/history                recent events
+  GET  /api/history[?since=SEQ]    recent events (only those after SEQ)
   GET  /api/events[?since=SEQ]     Server-Sent Events (history first, then live)
   GET  /api/jobs                   send jobs
   POST /api/jobs/{id}/cancel
@@ -145,7 +145,11 @@ async def answer_offer(request: web.Request) -> web.Response:
 
 
 async def history(request: web.Request) -> web.Response:
-    return web.json_response(list(request.app[DAEMON].history))
+    try:
+        since = int(request.query.get("since", -1))
+    except ValueError:
+        return _json_error(400, "since: an event number")
+    return web.json_response([e for e in request.app[DAEMON].history if e["seq"] > since])
 
 
 async def jobs(request: web.Request) -> web.Response:
