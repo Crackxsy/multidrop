@@ -21,6 +21,19 @@
 </p>
 
 <main>
+  <section id="welcome" class="card welcome" hidden>
+    <h2>Welcome to MultiDrop</h2>
+    <p>Phones and computers nearby can now send files to this PC – and you can send to them.</p>
+    <ul>
+      <li><b>Android or Samsung phone:</b> tap Share → Quick Share and pick <b class="alias"></b>.</li>
+      <li><b>iPhone:</b> use “Download in the browser” below (no app needed), or the free LocalSend app.</li>
+      <li><b>From this PC:</b> drag files onto a device below, or right-click files in Explorer → Send to → MultiDrop.</li>
+    </ul>
+    <p class="hint">If Windows asks whether MultiDrop may use the network, choose <b>Allow</b>.
+      Closing this window keeps MultiDrop running in the notification area, so you can still receive.</p>
+    <button type="button" class="primary" id="welcome-ok">Got it</button>
+  </section>
+
   <section id="offers-section" hidden>
     <h2>Incoming</h2>
     <div id="offers"></div>
@@ -97,6 +110,27 @@
   <section>
     <h2>Transfers</h2>
     <div id="jobs"></div>
+  </section>
+
+  <section id="desktop-audio" hidden>
+    <h2>Play this PC’s sound on a speaker</h2>
+    <p class="hint">AirPlay speakers and TVs on your Wi-Fi (Apple TV, HomePod, Sonos …).
+      The PC’s own speakers keep playing; the speaker is about 2 seconds behind.</p>
+    <div class="row">
+      <select id="speaker" aria-label="Speaker"></select>
+      <button type="button" class="primary" id="speaker-play">Play</button>
+      <button type="button" id="speaker-stop" hidden>Stop</button>
+      <button type="button" id="speaker-search">Search again</button>
+    </div>
+    <label class="row">Volume <input type="range" id="speaker-volume" min="0" max="100" step="5"></label>
+    <p class="meta" id="speaker-status"></p>
+  </section>
+
+  <section id="desktop-settings" hidden>
+    <h2>Settings</h2>
+    <p><label><input type="checkbox" id="set-autostart"> Start MultiDrop when I sign in to Windows (recommended, so phones can always reach you)</label></p>
+    <p><label><input type="checkbox" id="set-sendto"> Show “MultiDrop” when I right-click files → Send to</label></p>
+    <p><button type="button" id="open-downloads">Open received files</button></p>
   </section>
 
   <section>

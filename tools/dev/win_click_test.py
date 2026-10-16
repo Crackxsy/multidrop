@@ -4,19 +4,26 @@ Starts the real tray app (python -m multidrop.windows) in a throw-away profile
 (own APPDATA, runtime dir, config; discovery on loopback only, no browser
 window) and a simulated "phone" (multidrop receive). Then:
 
-  1. Explorer's "Send to": a second start with a file hands it over
-  2. web UI (headless Chromium): the file is listed, a click on the phone sends it
-  3. tray menu: "Show in "Send to" menu" on and off (shortcut in the temp profile)
-  4. tray menu: "Play audio on" opens the AirPlay speaker list
-  5. tray menu: "Quit" ends the app
+  1. Explorer's "Send to": a second start with a file hands it over, and the
+     app window (WebView2) comes up listing the file
+  2. app window: "Got it" on the welcome card, the "Send to" setting on and
+     off, closing only hides the window
+  3. web UI (headless Chromium): a click on the phone sends the file
+  4. tray menu: "Show in "Send to" menu" on and off (shortcut in the temp profile)
+  5. tray menu: "Play audio on" opens the AirPlay speaker list
+  6. tray menu: "Quit" ends the app
 
 The tray menu is opened with the message Explorer sends on a right-click on
-the icon, the entries are clicked through UI Automation (the mouse is not
-moved). Prints one line per step; screenshots and the app log go to OUT_DIR.
+the icon; window and menu entries are clicked through UI Automation (the
+mouse is not moved). Prints one line per step; screenshots and the app log go to OUT_DIR.
 
   pip install playwright pywinauto
   python -m playwright install chromium-headless-shell
   python tools/dev/win_click_test.py [OUT_DIR]
+
+Without disturbing the screen you are using (own invisible desktop):
+
+  python tools/dev/run_on_hidden_desktop.py OUT_DIR/run.log -- python tools/dev/win_click_test.py OUT_DIR
 """
 
 import os
@@ -29,6 +36,7 @@ from pathlib import Path
 
 WM_NOTIFY = 0x400 + 11      # pystray's tray callback message
 WM_RBUTTONUP = 0x0205
+WM_KEYDOWN, VK_ESCAPE = 0x0100, 0x1B
 
 
 def free_port(kind=socket.SOCK_STREAM) -> int:
@@ -58,6 +66,14 @@ def process_tree(pid: int) -> list[int]:
                           f"(Get-CimInstance Win32_Process -Filter 'ParentProcessId={pid}').ProcessId"],
                          capture_output=True, text=True, timeout=30).stdout
     return [pid, *map(int, out.split())]
+
+
+def app_window(pid: int):
+    """The visible app window, found among the app's processes."""
+    from pywinauto import Desktop
+    pids = set(process_tree(pid))
+    return next((w for w in Desktop(backend="uia").windows(title="MultiDrop")
+                 if w.process_id() in pids), None)
 
 
 def tray_menu_item(pid: int, name: str):
@@ -104,7 +120,9 @@ web_port = 0
     # A no-op "browser": the app must not open windows on the desktop.
     env = {**os.environ, "MULTIDROP_CONFIG": str(cfg), "XDG_RUNTIME_DIR": str(root / "rt"),
            "XDG_DATA_HOME": str(root / "data"), "APPDATA": str(root / "appdata"),
-           "BROWSER": f"{Path(py).as_posix()} -c pass"}
+           "BROWSER": f"{Path(py).as_posix()} -c pass",
+           # WebView2 builds its UI Automation tree only on request; force it.
+           "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--force-renderer-accessibility"}
     phone_env = {**env, "MULTIDROP_CONFIG": str(root / "none.toml"),
                  "XDG_RUNTIME_DIR": str(root / "rt-phone"),
                  "XDG_DATA_HOME": str(root / "phone-data")}
@@ -126,6 +144,34 @@ web_port = 0
         second = subprocess.run([py, "-m", "multidrop.windows", str(photo)], env=env, timeout=60)
         assert second.returncode == 0, f"second start: exit {second.returncode}"
         step("Send to: second start handed the file over")
+
+        win = wait(lambda: app_window(app.pid), "app window shown after Send to")
+        wait(lambda: any(d.window_text().endswith("Foto.jpg")       # name = full path
+                         for d in win.descendants(control_type="ListItem")),
+             "file listed in the window")
+        try:
+            win.capture_as_image().save(out / "0-window.png")
+        except OSError:                 # no screen grab on a hidden desktop
+            pass
+        step("app window came up with the handed-over file")
+        from pywinauto import Desktop
+        spec = Desktop(backend="uia").window(handle=win.handle)
+        spec.child_window(title="Got it", control_type="Button").wait("visible", 15).invoke()
+        wait((root / "pc-state" / "windows-welcome-done").exists, "welcome remembered")
+        step('window: "Got it" on the welcome card')
+        link = root / "appdata" / "Microsoft" / "Windows" / "SendTo" / "MultiDrop.lnk"
+        box = wait(lambda: next((c for c in win.descendants(control_type="CheckBox")
+                                 if "right-click" in c.window_text()), None),
+                   '"Send to" setting in the window')
+        box.toggle()
+        wait(link.exists, "Send to shortcut from the window")
+        box.toggle()
+        wait(lambda: not link.exists(), "Send to shortcut removed from the window")
+        step('window: "Send to" setting switched on and off')
+        win.close()
+        wait(lambda: app_window(app.pid) is None, "window hidden after closing")
+        assert app.poll() is None, "closing the window ended the app"
+        step("closing the window keeps MultiDrop running")
 
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
@@ -150,25 +196,32 @@ web_port = 0
             assert not errors, errors
         step("click on the phone sent the file")
 
-        link = root / "appdata" / "Microsoft" / "Windows" / "SendTo" / "MultiDrop.lnk"
-        tray_menu_item(app.pid, 'Show in "Send to" menu').invoke()
-        wait(link.exists, "Send to shortcut")
-        tray_menu_item(app.pid, 'Show in "Send to" menu').invoke()
-        wait(lambda: not link.exists(), "Send to shortcut removed")
-        step('tray: "Send to" entry switched on and off')
+        if os.environ.get("CLICK_TEST_HIDDEN_DESKTOP"):
+            # Windows opens tray menus only on the visible desktop.
+            print("skip tray menu steps (hidden desktop)", flush=True)
+            app.terminate()
+        else:
+            tray_menu_item(app.pid, 'Show in "Send to" menu').invoke()
+            wait(link.exists, "Send to shortcut")
+            tray_menu_item(app.pid, 'Show in "Send to" menu').invoke()
+            wait(lambda: not link.exists(), "Send to shortcut removed")
+            step('tray: "Send to" entry switched on and off')
 
-        from pywinauto import Desktop
-        from pywinauto.keyboard import send_keys
-        tray_menu_item(app.pid, "Play audio on").expand()
-        wait(lambda: any(w.descendants(title="This computer")
-                         for w in Desktop(backend="uia").windows(class_name="#32768")),
-             "AirPlay speaker submenu", 10)
-        send_keys("{ESC}{ESC}")
-        step('tray: "Play audio on" lists the speakers')
+            import ctypes
 
-        tray_menu_item(app.pid, "Quit").invoke()
-        assert app.wait(20) == 0, f"exit code {app.returncode}"
-        step("tray: Quit ended the app")
+            from pywinauto import Desktop
+            tray_menu_item(app.pid, "Play audio on").expand()
+            menus = wait(lambda: [w for w in Desktop(backend="uia").windows(class_name="#32768")
+                                  if w.descendants(title="This computer")] and
+                         Desktop(backend="uia").windows(class_name="#32768"),
+                         "AirPlay speaker submenu", 10)
+            for menu in reversed(menus):    # Esc to the menus themselves, never as global input
+                ctypes.windll.user32.PostMessageW(menu.handle, WM_KEYDOWN, VK_ESCAPE, 0)
+            step('tray: "Play audio on" lists the speakers')
+
+            tray_menu_item(app.pid, "Quit").invoke()
+            assert app.wait(20) == 0, f"exit code {app.returncode}"
+            step("tray: Quit ended the app")
         print("PASS", flush=True)
         return 0
     except Exception as e:

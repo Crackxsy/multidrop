@@ -26,6 +26,8 @@ Endpoints:
                                    no_pin, minutes, address) / stop
   GET|POST|DELETE /api/selection   files waiting to be sent from the UI: list /
                                    add {"paths": [absolute paths]} / clear
+  POST /api/show                   ask the desktop app to bring its window up
+                                   (event "show_ui"; second start on Windows)
   POST /api/send                   JSON {"target", "paths", "text", "pin"} or
                                    multipart: fields target (JSON), text, pin,
                                    and per file a "path" field then a "file" part
@@ -341,6 +343,11 @@ async def selection_clear(request: web.Request) -> web.Response:
     return web.json_response({"paths": []})
 
 
+async def show_ui(request: web.Request) -> web.Response:
+    request.app[DAEMON].emit("show_ui")
+    return web.json_response({})
+
+
 def build_app(daemon: Daemon, token: str) -> web.Application:
     app = web.Application(middlewares=[guard])
     app[DAEMON] = daemon
@@ -369,5 +376,6 @@ def build_app(daemon: Daemon, token: str) -> web.Application:
         web.get("/api/selection", selection_get),
         web.post("/api/selection", selection_add),
         web.delete("/api/selection", selection_clear),
+        web.post("/api/show", show_ui),
     ])
     return app

@@ -58,7 +58,9 @@ safety rules for AirDrop, Quick Share and LocalSend.
   bubbles with drag and drop, AirDrop sessions, AirPlay mirroring and audio.
   Fallbacks for GTK ≥ 4.6 / libadwaita ≥ 1.1.
 - **Windows app** (`windows.py`): the service on a thread, a pystray tray icon,
-  the web UI in the browser, Windows notifications for incoming offers.
+  the web UI in its own window (`win_window.py`, Edge WebView2 via pywebview;
+  the page gets settings, AirPlay audio and a first-start welcome through
+  `window.pywebview.api`; browser as fallback), Windows notifications for incoming offers.
   `winshell.py`: per-user autostart (HKCU Run key) and the Explorer "Send to"
   shortcut; a second start with files hands them to the running instance
   (`/api/selection`), where the UI sends them on a click. The CLI reaches the
