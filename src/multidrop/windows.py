@@ -103,23 +103,34 @@ class Service:
         return api(self.url, path, body, method)
 
 
-def _watch_offers(service: Service, notify) -> None:
-    """Incoming offers: Windows notification and the UI in the browser (the
-    D-Bus notifications with Accept/Decline exist only on Linux)."""
-    seen: set[str] = set()
-    while True:
+def _watch_events(service: Service, notify, show) -> None:
+    """Bring MultiDrop to the front when someone wants to send (with a Windows
+    notification; Accept/Decline notifications exist only on Linux), when
+    files are handed over and when it is started a second time."""
+    last = None                         # events before the start (history file) are old news
+    while last is None:
         try:
-            for offer in service.api("/api/offers"):
-                if offer["id"] in seen:
+            last = max((e["seq"] for e in service.api("/api/history")), default=0)
+        except Exception as e:
+            log.debug("event poll: %s", e)
+            time.sleep(1)
+    while True:
+        time.sleep(1)
+        try:
+            for e in service.api("/api/history"):
+                if e["seq"] <= last:
                     continue
-                seen.add(offer["id"])
-                count = len(offer.get("files") or [])
-                notify(f"{offer.get('from', 'A device')} wants to send {count} item(s)",
-                       APP_NAME)
-                webbrowser.open(service.url)
+                last = e["seq"]
+                if e["event"] == "offer":
+                    offer = e.get("offer") or {}
+                    count = len(offer.get("files") or [])
+                    notify(f"{offer.get('from', 'A device')} wants to send {count} item(s)",
+                           APP_NAME)
+                    show()
+                elif e["event"] == "show_ui" or (e["event"] == "selection" and e.get("count")):
+                    show()
         except Exception as e:          # service restarting or stopping
-            log.debug("offer poll: %s", e)
-        time.sleep(2)
+            log.debug("event poll: %s", e)
 
 
 def _exit(code: int) -> None:
@@ -142,7 +153,10 @@ def _selftest(service: Service) -> int:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="MultiDrop", description=__doc__.splitlines()[0])
     p.add_argument("--config", help="config file")
-    p.add_argument("--no-browser", action="store_true", help="don't open the UI at start")
+    p.add_argument("--no-browser", action="store_true",
+                   help="start in the background, without showing the window")
+    p.add_argument("--browser", action="store_true",
+                   help="show the UI in the web browser instead of the app window")
     p.add_argument("--selftest", action="store_true", help="start, check the API, exit")
     p.add_argument("paths", nargs="*", help="files to send (Explorer's \"Send to\")")
     args = p.parse_args(argv)
@@ -153,6 +167,8 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(filename=str(log_dir / "multidrop.log"),
                         level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    # One line per UI request would grow the log all day (the window polls).
+    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
 
     cfg = Config.load(Path(args.config) if args.config else None)
     service = Service(cfg)
@@ -164,7 +180,10 @@ def main(argv: list[str] | None = None) -> int:
             url = (runtime_dir() / "url").read_text().strip()
             if paths:
                 api(url, "/api/selection", {"paths": paths})
-            webbrowser.open(url)
+            else:
+                api(url, "/api/show", {})
+            if args.browser:
+                webbrowser.open(url)
         except (OSError, ValueError) as e:
             log.warning("handing over to the running instance failed: %s", e)
         return 0
@@ -181,7 +200,9 @@ def main(argv: list[str] | None = None) -> int:
             service.api("/api/selection", {"paths": paths})
         except (OSError, ValueError) as e:
             log.warning("files from the command line: %s", e)
-    if paths or not args.no_browser:
+    window = None
+    use_window = not args.browser and importlib.util.find_spec("webview") is not None
+    if not use_window and (paths or not args.no_browser):
         webbrowser.open(url)
 
     try:
@@ -198,15 +219,23 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     def open_ui(icon=None, item=None):
-        webbrowser.open(service.url)
+        if window is not None:
+            window.show()
+        else:
+            webbrowser.open(service.url)
 
     def open_downloads(icon=None, item=None):
         cfg.download_dir.mkdir(parents=True, exist_ok=True)
         os.startfile(str(cfg.download_dir)) if os.name == "nt" else webbrowser.open(
             cfg.download_dir.as_uri())
 
+    quitting = threading.Event()
+
     def quit_app(icon, item=None):
+        quitting.set()
         icon.stop()
+        if window is not None:
+            window.quit()
 
     def background(fn, *args):
         """Slow actions (network) off the tray thread; errors as a notification."""
@@ -269,10 +298,29 @@ def main(argv: list[str] | None = None) -> int:
                                              checked=lambda item: winshell.sendto_enabled()),
                             pystray.Menu.SEPARATOR,
                             pystray.MenuItem("Quit", quit_app)))
-    threading.Thread(target=_watch_offers, args=(service, icon.notify), daemon=True).start()
+    if use_window:
+        from multidrop.win_window import AppWindow, DesktopApi
+        window = AppWindow(
+            url, DesktopApi(cfg.state_dir, cfg.download_dir, audio), log_dir / "webview",
+            hidden=args.no_browser and not paths,
+            on_first_hide=lambda: icon.notify(
+                f"{APP_NAME} keeps running here, so phones can still send you files. "
+                "Quit it from this icon.", APP_NAME))
+    threading.Thread(target=_watch_events, args=(service, icon.notify, open_ui),
+                     daemon=True).start()
     if audio is not None:
         background(audio.scan)
-    icon.run()
+    if window is None:
+        icon.run()
+    else:
+        icon.run_detached()
+        try:
+            window.run()                # until "Quit"
+        except Exception as e:          # no WebView2 runtime: use the browser
+            log.warning("app window unavailable, using the browser: %s", e)
+            window = None
+            webbrowser.open(url)
+            quitting.wait()
     if audio is not None:
         audio.stop()
     service.stop()

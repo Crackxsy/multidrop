@@ -36,10 +36,13 @@ it: it installs for your user only (no admin rights) with a Start menu entry
 and, if you like, *Send to* and *Start with Windows*; uninstall in *Settings →
 Apps*. Or run the portable **MultiDrop.exe** without installing.
 
-MultiDrop sits in the notification area and opens in your browser. Allow
-*Private networks* when Windows Firewall asks. In the tray menu you can turn on *Start with Windows* and *Show in "Send to"
-menu*. Then right-click files in Explorer → *Send to* → *MultiDrop* and click a
-device.
+MultiDrop opens in its own window and explains on first start how phones
+send to it. Closing the window keeps it running in the notification area, so
+you can still receive. Allow the network when Windows Firewall asks. In the
+window's *Settings* (or the tray menu) you can turn on *Start with Windows*
+and the *Send to* entry. Then right-click files in Explorer → *Send to* →
+*MultiDrop* and click a device. *Play this PC's sound on a speaker* sends the
+PC's audio to AirPlay speakers.
 
 ### Ubuntu / Debian (apt)
 

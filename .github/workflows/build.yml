@@ -46,7 +46,7 @@ jobs:
           pyinstaller --noconfirm --onefile --windowed --name MultiDrop
           --icon data/icons/multidrop.ico
           --add-data "data/icons/multidrop.png;data/icons"
-          --collect-all multidrop --collect-all zeroconf --collect-all soundcard
+          --collect-all multidrop --collect-all zeroconf --collect-all soundcard --collect-all webview
           --hidden-import pystray._win32
           packaging/windows/launch.py
       - name: Self-test (starts Quick Share + LocalSend, checks the API)

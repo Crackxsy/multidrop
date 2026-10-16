@@ -59,3 +59,6 @@ summary { cursor: pointer; color: var(--muted); }
 .pin-input { width: 7rem; font-variant-numeric: tabular-nums; }
 #log li.old { opacity: .65; }
 #selection { margin: .4rem 0; padding: .6rem 1rem .6rem 2rem; max-height: 10rem; overflow: auto; }
+.welcome { border-left: 4px solid var(--accent); }
+.welcome ul { padding-left: 1.2rem; }
+#speaker { min-width: 14rem; flex: 1; }

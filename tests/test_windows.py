@@ -109,9 +109,48 @@ def test_second_start_hands_over_files(tmp_path, monkeypatch, make_config):
         f.write_bytes(b"jpg")
         assert windows.main([str(f)]) == 0
         assert running.api("/api/selection")["paths"] == [str(f.resolve())]
+        assert opened == []                 # the running app shows its own window
+        assert windows.main([]) == 0        # Start menu: just bring it up
+        assert running.api("/api/history")[-1]["event"] == "show_ui"
+        assert windows.main(["--browser"]) == 0
         assert opened == [url]
     finally:
         running.stop()
+
+
+def test_watch_events_brings_the_window_up(tmp_path, monkeypatch, make_config):
+    """Offers, handed-over files and a second start show the window; old
+    events from before the start do not."""
+    import threading
+    import time
+
+    from multidrop import windows
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "rt"))
+    cfg = make_config("winpc")
+    cfg.daemon.web_port = 0
+    service = windows.Service(cfg)
+    service.start()
+    try:
+        service.api("/api/show", {})                    # before the watcher: ignored
+        shown, notes = [], []
+        threading.Thread(target=windows._watch_events,
+                         args=(service, lambda *a: notes.append(a), lambda: shown.append(1)),
+                         daemon=True).start()
+        time.sleep(1.5)
+        assert shown == []
+        f = tmp_path / "a.txt"
+        f.write_text("x")
+        service.api("/api/selection", {"paths": [str(f)]})
+        service.api("/api/show", {})
+        service.api("/api/selection", method="DELETE")   # count 0: nothing to show
+        for _ in range(50):
+            if len(shown) >= 2:
+                break
+            time.sleep(0.1)
+        time.sleep(1.2)
+        assert len(shown) == 2 and notes == []
+    finally:
+        service.stop()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows registry and shortcuts")
@@ -140,3 +179,50 @@ def test_autostart_and_send_to(tmp_path, monkeypatch):
     assert winshell.sendto_enabled() and winshell.sendto_link().stat().st_size > 0
     winshell.set_sendto(False)
     assert not winshell.sendto_enabled()
+
+
+def test_desktop_api_settings_and_welcome(tmp_path, monkeypatch):
+    """What the app window's page can call (win_window.DesktopApi)."""
+    from multidrop import win_window, winshell
+    state = {"autostart": False, "sendto": False}
+    monkeypatch.setattr(winshell, "autostart_enabled", lambda: state["autostart"])
+    monkeypatch.setattr(winshell, "sendto_enabled", lambda: state["sendto"])
+    monkeypatch.setattr(winshell, "set_autostart", lambda on: state.update(autostart=on))
+    monkeypatch.setattr(winshell, "set_sendto", lambda on: state.update(sendto=on))
+    api = win_window.DesktopApi(tmp_path / "state", tmp_path / "in")
+    assert api.settings() == {"autostart": False, "sendto": False, "welcome": True,
+                              "audio": False}
+    assert api.set_autostart(True)["autostart"] and api.set_sendto(True)["sendto"]
+    api.welcome_done()
+    assert api.settings()["welcome"] is False
+    assert win_window.DesktopApi(tmp_path / "state", tmp_path / "in").settings()["welcome"] is False
+
+
+def test_desktop_api_speakers(tmp_path):
+    from multidrop import raop, win_window
+
+    class FakeAudio:
+        receivers = [raop.Receiver("Küche", "10.0.0.2", 7000, {0}, False),
+                     raop.Receiver("HomePod", "10.0.0.3", 7000, {4}, False)]
+        current, volume, played = None, 0.75, []
+
+        def play(self, r):
+            self.current = r
+
+        def stop(self):
+            self.current = None
+
+        def set_volume(self, level):
+            self.volume = level
+
+        def scan(self):
+            pass
+
+    api = win_window.DesktopApi(tmp_path, tmp_path, FakeAudio())
+    assert api.speakers()["list"] == [{"name": "Küche", "supported": True},
+                                      {"name": "HomePod", "supported": False}]
+    assert api.play_on("Küche")["current"] == "Küche"
+    assert api.set_volume(7)["volume"] == 1.0
+    assert api.stop_audio()["current"] is None
+    with pytest.raises(ValueError, match="search again"):
+        api.play_on("Gone")

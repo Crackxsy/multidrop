@@ -46,9 +46,11 @@ async function loadStatus() {
   const s = await api("/api/status");
   const ports = Object.entries(s.protocols)
     .map(([p, v]) => `${PROTO[p] || p} ${v.port}`).join(" · ");
-  $("#status").textContent =
-    `visible as “${s.alias}” · ${ports} · saves to ${s.download_dir}` +
+  // Plain status; the technical details stay in the tooltip.
+  $("#status").textContent = `Ready – visible as “${s.alias}”` +
     (s.accept === "all" ? " · accepts everything" : "");
+  $("#status").title = `${ports} · saves to ${s.download_dir}`;
+  document.querySelectorAll(".alias").forEach((e) => { e.textContent = `“${s.alias}”`; });
 }
 
 const PARTIAL_NOTE = {
@@ -433,6 +435,59 @@ function connect() {
   };
 }
 
+// -- app window on Windows: window.pywebview.api (win_window.DesktopApi) -------
+
+const desktop = () => window.pywebview && window.pywebview.api;
+
+async function initDesktop() {
+  const d = desktop();
+  const s = await d.settings();
+  $("#welcome").hidden = !s.welcome;
+  $("#welcome-ok").onclick = () => { $("#welcome").hidden = true; d.welcome_done(); };
+  $("#set-autostart").checked = s.autostart;
+  $("#set-sendto").checked = s.sendto;
+  for (const [id, fn] of [["#set-autostart", "set_autostart"], ["#set-sendto", "set_sendto"]]) {
+    $(id).onchange = (ev) => d[fn](ev.target.checked).catch((e) => {
+      ev.target.checked = !ev.target.checked;
+      addLog(`Could not change the setting: ${e.message || e}`);
+    });
+  }
+  $("#open-downloads").onclick = () => d.open_downloads();
+  $("#desktop-settings").hidden = false;
+  if (!s.audio) return;
+  $("#desktop-audio").hidden = false;
+  const run = (p) => p.then(showSpeakers).catch((e) => {
+    $("#speaker-status").textContent = String(e.message || e);
+  });
+  $("#speaker-play").onclick = () => {
+    $("#speaker-status").textContent = "Connecting …";
+    run(d.play_on($("#speaker").value));
+  };
+  $("#speaker-stop").onclick = () => run(d.stop_audio());
+  $("#speaker-search").onclick = () => {
+    $("#speaker-status").textContent = "Searching …";
+    run(d.search_speakers());
+  };
+  $("#speaker-volume").onchange = (ev) => run(d.set_volume(ev.target.value / 100));
+  const sp = await d.speakers();
+  showSpeakers(sp);
+  if (!sp.list.length) $("#speaker-search").click();
+}
+
+function showSpeakers(sp) {
+  const sel = $("#speaker");
+  const chosen = sp.current || sel.value;
+  sel.replaceChildren(...sp.list.map((r) => el("option",
+    r.supported ? { value: r.name } : { value: r.name, disabled: "" },
+    r.supported ? r.name : `${r.name} (not supported)`)));
+  if (chosen) sel.value = chosen;
+  $("#speaker-volume").value = Math.round(sp.volume * 100);
+  $("#speaker-stop").hidden = !sp.current;
+  $("#speaker-play").disabled = !sp.list.some((r) => r.supported);
+  $("#speaker-status").textContent = sp.current ? `Playing on ${sp.current}`
+    : sp.list.length ? "" : "No speakers found. They must be on the same Wi-Fi.";
+}
+
 function init() {
   const m = location.hash.match(/t=([^&]+)/);
   token = m ? decodeURIComponent(m[1]) : sessionStorage.getItem("multidrop-token") || "";
@@ -471,6 +526,8 @@ function init() {
   loadStatus().catch((e) => { $("#status").textContent = `Error: ${e.message}`; });
   loadOffers().catch(() => {});
   loadSelection().catch(() => {});
+  if (desktop()) initDesktop().catch(() => {});
+  else window.addEventListener("pywebviewready", () => initDesktop().catch(() => {}), { once: true });
   loadDevices(false);
   renderJobs();
   connect();
