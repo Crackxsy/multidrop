@@ -62,7 +62,9 @@ safety rules for AirDrop, Quick Share and LocalSend.
   `winshell.py`: per-user autostart (HKCU Run key) and the Explorer "Send to"
   shortcut; a second start with files hands them to the running instance
   (`/api/selection`), where the UI sends them on a click. The CLI reaches the
-  service over 127.0.0.1 with the token (no Unix socket on Windows). Built
+  service over 127.0.0.1 with the token (no Unix socket on Windows).
+  AirPlay audio: `raop.py` speaks RAOP (AirPlay 1) itself, `win_audio.py`
+  records the default output with WASAPI loopback (tray *Play audio on*). Built
   into `MultiDrop.exe` with PyInstaller by GitHub Actions.
 - Configuration: `~/.config/multidrop/config.toml`; downloads to
   `~/Downloads/multidrop`; keys and identities under
@@ -127,6 +129,7 @@ src/multidrop/
   desktop.py              Linux desktop app (GTK 4, tray, AirDrop, AirPlay)
   windows.py              Windows tray app
   winshell.py             Windows autostart and Explorer "Send to"
+  raop.py, win_audio.py   AirPlay audio sender (RAOP) and Windows loopback capture
   airdrop_radio.py        timed AirDrop sessions with omdrop-owl
   wifi_channel.py         temporary Wi-Fi channel move for AirDrop
   airplay_scan.py         AirPlay receiver capabilities from mDNS (features bits)

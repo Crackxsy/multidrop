@@ -19,7 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=8", "pytest-asyncio>=0.23"]
-windows = ["pystray>=0.19", "pillow>=10"]
+windows = ["pystray>=0.19", "pillow>=10", "soundcard>=0.4.3; sys_platform == 'win32'"]
 
 [project.scripts]
 multidrop = "multidrop.cli:main"
