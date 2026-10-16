@@ -280,6 +280,24 @@ async def _first_with_actions(fake):
     return next((n for n in fake.notes if n[3]), None)
 
 
+async def test_selection_through_api(daemon, tmp_path):
+    """Files handed over by the desktop (Explorer "Send to"), sent from the UI."""
+    cfg, _, sess = daemon
+    f = tmp_path / "Brief.txt"
+    f.write_text("x")
+    assert (await post(sess, "/api/selection", {"paths": ["relative.txt"]}))[0] == 400
+    assert (await post(sess, "/api/selection", {"paths": []}))[0] == 400
+    for _ in range(2):          # the same file twice is listed once
+        status, body = await post(sess, "/api/selection", {"paths": [str(f)]})
+        assert status == 200 and body["paths"] == [str(f)]
+    assert (await get(sess, "/api/selection"))[1]["paths"] == [str(f)]
+    async with sess.delete("/api/selection") as r:
+        assert r.status == 200
+    assert (await get(sess, "/api/selection"))[1]["paths"] == []
+    events = [e for e in (await get(sess, "/api/history"))[1] if e["event"] == "selection"]
+    assert [e["count"] for e in events] == [1, 1, 0]
+
+
 async def test_share_through_api(daemon):
     cfg, _, sess = daemon
     form = aiohttp.FormData()

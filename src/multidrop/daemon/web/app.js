@@ -8,9 +8,10 @@ let token = "";
 let groups = [];
 let lastSeq = 0;
 const jobs = new Map();          // job id -> {info, files: Map(name -> {done,size}), state}
-const resend = new Map();        // job id -> {target, files, text, label}, for a retry with PIN
+const resend = new Map();        // job id -> {target, files|paths|text, label}, for a retry with PIN
 const manual = [];               // targets added by address
 const unchecked = new Map();     // offer id -> Set of file ids the user unticked
+let selection = [];              // local paths handed over (Explorer "Send to")
 
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
@@ -136,7 +137,8 @@ function renderDevices() {
       el("div", { class: "meta" }, g.type ? `${g.type} · ` : "", `${chosen.address}`),
       g.targets.length > 1 ? protoSel
         : el("span", { class: "badge" }, PROTO[chosen.protocol] || chosen.protocol));
-    makeDropTarget(card, (files) => upload(targetOf(chosen), files, g.name));
+    makeDropTarget(card, (files) => upload(targetOf(chosen), files, g.name),
+                   () => sendPaths(targetOf(chosen), selection, g.name));
     box.append(card);
     g.targets.forEach((t) => select.append(el("option", { value: JSON.stringify(targetOf(t)) },
       `${g.name} (${PROTO[t.protocol] || t.protocol})`)));
@@ -150,7 +152,8 @@ function targetOf(t) {
   return t.key ? { key: t.key } : { protocol: t.protocol, address: t.address, port: t.port };
 }
 
-function makeDropTarget(card, onFiles) {
+// onSelection: what a click does while handed-over files are waiting.
+function makeDropTarget(card, onFiles, onSelection) {
   card.addEventListener("dragover", (ev) => { ev.preventDefault(); card.classList.add("over"); });
   card.addEventListener("dragleave", () => card.classList.remove("over"));
   card.addEventListener("drop", async (ev) => {
@@ -161,6 +164,7 @@ function makeDropTarget(card, onFiles) {
   });
   card.addEventListener("click", (ev) => {
     if (ev.target.closest("[data-stop], label")) return;   // controls inside the card
+    if (selection.length && onSelection) { onSelection(); return; }
     const input = $("#pick-files");
     input.value = "";
     input.onchange = () => {
@@ -211,6 +215,18 @@ async function upload(target, files, label, pin) {
   }
 }
 
+async function sendPaths(target, paths, label, pin) {
+  addLog(`Handing over ${paths.length} item(s) to ${label} …`);
+  try {
+    const { job } = await api("/api/send", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target, paths, pin: pin || null }) });
+    remember(job, { target, paths, label });
+    if (paths === selection) await clearSelection();
+  } catch (e) {
+    addLog(`Sending to ${label} failed: ${e.message}`);
+  }
+}
+
 async function sendText(target, text, label, pin) {
   const { job } = await api("/api/send", { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ target, text, pin: pin || null }) });
@@ -235,6 +251,7 @@ function retryWithPin(id, pin) {
   if (!w || !pin) return;
   resend.delete(id);
   if (w.files) upload(w.target, w.files, w.label, pin);
+  else if (w.paths) sendPaths(w.target, w.paths, w.label, pin);
   else sendText(w.target, w.text, w.label, pin).catch((e) => addLog(`Sending failed: ${e.message}`));
 }
 
@@ -253,6 +270,31 @@ async function startShare(files) {
   } catch (e) {
     addLog(`Sharing failed: ${e.message}`);
   }
+}
+
+async function shareSelection() {
+  try {
+    showShare(await api("/api/share", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paths: selection, minutes: +$("#share-minutes").value,
+                             no_pin: $("#share-nopin").checked }) }));
+    await clearSelection();
+  } catch (e) {
+    addLog(`Sharing failed: ${e.message}`);
+  }
+}
+
+// -- files handed over by the desktop (Explorer "Send to") ------------------
+
+async function loadSelection() {
+  selection = (await api("/api/selection")).paths;
+  $("#selection").replaceChildren(...selection.map((p) =>
+    el("li", { title: p }, p.split(/[\\/]/).pop())));
+  $("#selection-section").hidden = !selection.length;
+}
+
+async function clearSelection() {
+  await api("/api/selection", { method: "DELETE" });
+  await loadSelection();
 }
 
 function showShare(s) {
@@ -377,6 +419,7 @@ function connect() {
     if (ev.job) onJobEvent(ev);
     else if (ev.event === "job_started") onJobEvent(ev);
     if (ev.event.startsWith("offer")) loadOffers().catch(() => {});
+    if (ev.event === "selection") loadSelection().catch(() => {});
     if (ev.event === "share_download" || ev.event === "share_stopped") {
       api("/api/share").then(showShare).catch(() => {});
     }
@@ -398,8 +441,10 @@ function init() {
   history.replaceState(null, "", location.pathname);   // token out of the address bar
 
   $("#refresh").addEventListener("click", () => loadDevices(true));
-  makeDropTarget($("#qr-card"), (files) => upload({ qr: true }, files, "QR code"));
-  makeDropTarget($("#share-card"), startShare);
+  makeDropTarget($("#qr-card"), (files) => upload({ qr: true }, files, "QR code"),
+                 () => sendPaths({ qr: true }, selection, "QR code"));
+  makeDropTarget($("#share-card"), startShare, shareSelection);
+  $("#selection-clear").addEventListener("click", () => clearSelection().catch(() => {}));
   $("#share-stop").addEventListener("click", () =>
     api("/api/share", { method: "DELETE" }).catch(() => {}).finally(() => showShare(null)));
   api("/api/share").then(showShare).catch(() => {});
@@ -425,6 +470,7 @@ function init() {
 
   loadStatus().catch((e) => { $("#status").textContent = `Error: ${e.message}`; });
   loadOffers().catch(() => {});
+  loadSelection().catch(() => {});
   loadDevices(false);
   renderJobs();
   connect();

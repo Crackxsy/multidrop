@@ -91,6 +91,7 @@ class Daemon:
         self._tasks: set[asyncio.Task] = set()
         self._job_tasks: dict[str, asyncio.Task] = {}
         self.share = None                  # running WebShare, if any
+        self.selection: list[str] = []     # files handed over to send from the UI
         self._share_cleanup: Path | None = None
 
     # -- lifecycle --------------------------------------------------------
@@ -132,6 +133,15 @@ class Daemon:
                 "accept": self.config.daemon.accept,
                 "prefer": self.config.prefer,
                 "protocols": {n: {"port": b.port} for n, b in self.backends.items()}}
+
+    def select(self, paths: list[Path]) -> None:
+        """Add files to send (Windows Explorer's "Send to"); the UI picks the device."""
+        self.selection += [str(p) for p in paths if str(p) not in self.selection]
+        self.emit("selection", count=len(self.selection))
+
+    def clear_selection(self) -> None:
+        self.selection.clear()
+        self.emit("selection", count=0)
 
     # -- history file -----------------------------------------------------
 

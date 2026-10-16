@@ -1,6 +1,7 @@
-"""Windows code paths that can run on Linux."""
+"""Windows code paths (most of them also run on Linux)."""
 
 import socket
+import sys
 
 import pytest
 
@@ -90,3 +91,52 @@ def test_cli_output_is_utf8(monkeypatch):
     print("\u2580\u2584\u2588", end="")
     out.flush()
     assert out.buffer.getvalue() == "\u2580\u2584\u2588".encode()
+
+
+def test_second_start_hands_over_files(tmp_path, monkeypatch, make_config):
+    """`MultiDrop.exe FILE` (Explorer's "Send to") while MultiDrop runs."""
+    from multidrop import windows
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "rt"))
+    monkeypatch.setenv("MULTIDROP_CONFIG", str(tmp_path / "none.toml"))
+    opened = []
+    monkeypatch.setattr(windows.webbrowser, "open", opened.append)
+    cfg = make_config("winpc")
+    cfg.daemon.web_port = 0
+    running = windows.Service(cfg)
+    url = running.start()
+    try:
+        f = tmp_path / "Foto.jpg"
+        f.write_bytes(b"jpg")
+        assert windows.main([str(f)]) == 0
+        assert running.api("/api/selection")["paths"] == [str(f.resolve())]
+        assert opened == [url]
+    finally:
+        running.stop()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows registry and shortcuts")
+def test_autostart_and_send_to(tmp_path, monkeypatch):
+    import winreg
+
+    from multidrop import winshell
+    monkeypatch.setattr(winshell, "RUN_KEY", r"Software\MultiDropTest\Run")
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    try:
+        assert not winshell.autostart_enabled()
+        winshell.set_autostart(True)
+        assert winshell.autostart_enabled()
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, winshell.RUN_KEY) as key:
+            command = winreg.QueryValueEx(key, "MultiDrop")[0]
+        assert "multidrop.windows" in command and command.endswith("--no-browser")
+        winshell.set_autostart(False)
+        winshell.set_autostart(False)       # already off: no error
+        assert not winshell.autostart_enabled()
+    finally:
+        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, winshell.RUN_KEY)
+        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, r"Software\MultiDropTest")
+
+    winshell.set_sendto(True)
+    assert winshell.sendto_link() == tmp_path / "Microsoft/Windows/SendTo/MultiDrop.lnk"
+    assert winshell.sendto_enabled() and winshell.sendto_link().stat().st_size > 0
+    winshell.set_sendto(False)
+    assert not winshell.sendto_enabled()
