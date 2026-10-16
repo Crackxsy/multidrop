@@ -21,6 +21,16 @@ jobs:
       - run: pip install -e ".[test]"
       - run: pytest -q
 
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[test]"
+      - run: pytest -q
+
   windows:
     runs-on: windows-latest
     steps:
@@ -70,7 +80,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test-linux, windows, deb]
+    needs: [test-linux, test-windows, windows, deb]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

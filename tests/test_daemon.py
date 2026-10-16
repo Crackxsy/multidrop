@@ -12,6 +12,7 @@ import subprocess
 import aiohttp
 import pytest
 
+from conftest import WINDOWS, api_session, posix_only
 from multidrop.backends.quickshare import QuickShareBackend, outbound
 from multidrop.daemon import AlreadyRunning, run, socket_path
 
@@ -35,7 +36,7 @@ async def daemon(daemon_cfg):
     task = asyncio.ensure_future(run(daemon_cfg, notifications=False,
                                      started=started, stop=stop))
     url = await asyncio.wait_for(asyncio.shield(started), 10)
-    sess = aiohttp.ClientSession(connector=aiohttp.UnixConnector(str(socket_path(daemon_cfg))))
+    sess = api_session(daemon_cfg)
     try:
         yield daemon_cfg, url, sess
     finally:
@@ -46,12 +47,12 @@ async def daemon(daemon_cfg):
 
 
 async def get(sess, path):
-    async with sess.get(f"http://localhost{path}") as r:
+    async with sess.get(path) as r:
         return r.status, await r.json()
 
 
 async def post(sess, path, body):
-    async with sess.post(f"http://localhost{path}", json=body) as r:
+    async with sess.post(path, json=body) as r:
         return r.status, await r.json()
 
 
@@ -70,7 +71,8 @@ async def test_status_and_single_instance(daemon):
     assert status == 200 and body["alias"] == "pc"
     assert set(body["protocols"]) == {"localsend", "quickshare"}
     assert (socket_path(cfg).parent / "url").read_text().strip() == url
-    assert oct(os.stat(socket_path(cfg).parent).st_mode & 0o777) == "0o700"
+    if not WINDOWS:     # no POSIX modes there
+        assert oct(os.stat(socket_path(cfg).parent).st_mode & 0o777) == "0o700"
     with pytest.raises(AlreadyRunning):
         await run(cfg, notifications=False)
 
@@ -152,7 +154,7 @@ async def test_send_upload_with_folder(daemon, make_config):
                            ("../../escape.txt", b"C")):
             form.add_field("path", path)
             form.add_field("file", data, filename=path.rsplit("/", 1)[-1])
-        async with sess.post("http://localhost/api/send", data=form) as r:
+        async with sess.post("/api/send", data=form) as r:
             assert r.status == 200, await r.text()
             job = (await r.json())["job"]
 
@@ -177,7 +179,7 @@ async def test_send_errors(daemon, tmp_path):
                                            "text": "x"}))[0] == 400
     assert (await post(sess, "/api/send", {"target": {"qr": True}, "paths": ["relative.txt"]}))[0] == 400
     assert (await post(sess, "/api/send", {"target": {"qr": True}}))[0] == 400
-    async with sess.post("http://localhost/api/send", data=b"{oops",
+    async with sess.post("/api/send", data=b"{oops",
                          headers={"Content-Type": "application/json"}) as r:
         assert r.status == 400
 
@@ -213,7 +215,7 @@ async def test_accept_all_policy(daemon_cfg, tmp_path):
     task = asyncio.ensure_future(run(daemon_cfg, notifications=False, started=started, stop=stop))
     await asyncio.wait_for(asyncio.shield(started), 10)
     try:
-        sess = aiohttp.ClientSession(connector=aiohttp.UnixConnector(str(socket_path(daemon_cfg))))
+        sess = api_session(daemon_cfg)
         port = (await get(sess, "/api/status"))[1]["protocols"]["quickshare"]["port"]
         await sess.close()
         await outbound.send("127.0.0.1", port, our_name="Pixel", text="auto",
@@ -247,7 +249,7 @@ async def test_notification_accepts_offer(private_bus, daemon_cfg, tmp_path):
                                      stop=stop, bus_address=private_bus))
     await asyncio.wait_for(asyncio.shield(started), 10)
     try:
-        sess = aiohttp.ClientSession(connector=aiohttp.UnixConnector(str(socket_path(daemon_cfg))))
+        sess = api_session(daemon_cfg)
         port = (await get(sess, "/api/status"))[1]["protocols"]["quickshare"]["port"]
         await sess.close()
         src = tmp_path / "doc.pdf"
@@ -284,7 +286,7 @@ async def test_share_through_api(daemon):
     form.add_field("minutes", "5")
     form.add_field("path", "Folder/f.txt")
     form.add_field("file", b"inhalt", filename="f.txt")
-    async with sess.post("http://localhost/api/share", data=form) as r:
+    async with sess.post("/api/share", data=form) as r:
         assert r.status == 200, await r.text()
         info = await r.json()
     assert info["running"] and len(info["pin"]) == 4 and info["svg"].startswith("<svg")
@@ -300,12 +302,13 @@ async def test_share_through_api(daemon):
     assert "pin" not in started                      # PIN not in the event log
     assert (await post(sess, "/api/share", {"paths": ["rel"]}))[0] == 400
     assert (await post(sess, "/api/share", {"paths": [str(cfg.download_dir)], "pin": "12"}))[0] == 400
-    async with sess.delete("http://localhost/api/share") as r:
+    async with sess.delete("/api/share") as r:
         assert r.status == 200
     assert (await get(sess, "/api/share"))[1] is None
     assert not any((cfg.state_dir / "outgoing").iterdir())
 
 
+@posix_only
 async def test_shutdown_keeps_a_replaced_socket(daemon_cfg):
     """A daemon that lost its socket to another instance must not delete the
     other one's socket and URL file on exit (it would run unreachable)."""
