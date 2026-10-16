@@ -2,8 +2,9 @@
 
 Share files, your screen and audio with devices nearby – Linux and Windows.
 
-**Windows:** download `MultiDrop.exe` and run it (Quick Share, LocalSend,
-browser download). On first start allow Windows Firewall for private networks.
+**Windows:** run `MultiDrop-Setup.exe` (per-user install, no admin rights) or
+the portable `MultiDrop.exe` (Quick Share, LocalSend, browser download,
+Explorer "Send to"). On first start allow Windows Firewall for private networks.
 
 **Ubuntu/Debian:** `sudo apt install multidrop` after adding the APT repository
 (see README), or `sudo apt install ./multidrop_*_all.deb`.
