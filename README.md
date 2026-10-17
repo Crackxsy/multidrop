@@ -1,76 +1,67 @@
 <p align="center"><img src="docs/banner.png" alt="MultiDrop" width="100%"></p>
 
+<h3 align="center">AirDrop, Quick Share, LocalSend and AirPlay – for Linux and Windows.</h3>
+
 <p align="center">
-  <b>AirDrop, Quick Share, LocalSend and AirPlay for Linux and Windows.</b><br>
-  Share files, your screen and audio with phones, Macs and TVs nearby.
+  Send files to any phone nearby, and get files from it. No cloud, no cable, no account.
 </p>
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/digitaldanis/multidrop"></a>
   <a href="../../actions/workflows/build.yml"><img alt="Build" src="https://github.com/digitaldanis/multidrop/actions/workflows/build.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
-  <img alt="Platforms: Linux, Windows" src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows-informational">
+  <img alt="Linux | Windows" src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows-informational">
 </p>
 
 <p align="center">
-  <a href="#install">Install</a> ·
-  <a href="#using-it">Using it</a> ·
-  <a href="#command-line">Command line</a> ·
+  <a href="#download"><b>Download</b></a> ·
+  <a href="#how-to-use-it">How to use it</a> ·
   <a href="#faq">FAQ</a> ·
+  <a href="#command-line">Command line</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
-## Why MultiDrop?
+---
 
-- **One app for every phone.** iPhone, Android and Samsung each speak their own
-  protocol. MultiDrop speaks all of them, so you don't need a separate app per
-  device.
-- **No cloud, no cable, no account.** Files go straight from device to device
-  over your local network or a direct radio link.
-- **Asks before it accepts.** Nothing lands on your PC until you say yes.
-- **Works for people who aren't into tech.** Phones without any app can still
-  download from a QR code in the browser.
+iPhones speak AirDrop, Android and Samsung phones speak Quick Share, and the
+rest use LocalSend. **MultiDrop speaks all of them**, so your PC finally shows
+up in the share menu of every phone in the room.
 
-## Features
+- 📲 **Every phone** – iPhone, Android, Samsung, and any phone with a browser
+- 🔒 **Stays local** – straight from device to device, nothing goes through a server
+- ✋ **Asks first** – nothing lands on your PC until you accept it
+- 🔊 **More than files** – mirror your screen or play your PC's sound on AirPlay speakers
+
+## What works where
 
 | | Linux | Windows | Works with |
 |---|:---:|:---:|---|
-| **Quick Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung (no app) |
-| **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, PC with LocalSend |
-| **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app |
-| **AirDrop** – send & receive | ✅* | – | iPhone, iPad, Mac |
+| **Quick Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung (no extra app) |
+| **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, PCs with LocalSend |
+| **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app at all |
+| **AirDrop** – send & receive | ✅¹ | – | iPhone, iPad, Mac |
 | **AirPlay** – mirror your screen | ✅ | – | Apple TV, Mac, AirPlay TVs |
-| **AirPlay** – play audio | ✅ | ✅† | Apple TV, HomePod, Sonos, Mac |
+| **AirPlay** – play audio | ✅ | ✅² | Apple TV, HomePod, Sonos, Mac |
 
-\* needs a supported Wi-Fi card, see [AirDrop setup](#airdrop-setup-linux).
+<sub>¹ needs a supported Wi-Fi card, see [AirDrop on Linux](#airdrop-on-linux).
+² receivers that accept unencrypted or RSA AirPlay 1 streams without a password;
+others are listed as not supported.</sub>
 
-† in the window (*Play this PC's sound on a speaker*) or the tray menu; receivers that accept unencrypted or RSA AirPlay 1
-streams without a password (others are listed as not supported).
+## Download
 
-## Install
+### Windows 10 / 11
 
-### Windows
+1. Download **[MultiDrop-Setup.exe](../../releases/latest)**.
+2. Run it. It installs just for you – no admin rights needed.
+3. Click **Allow** when Windows Firewall asks, so phones can reach your PC.
 
-1. Download **MultiDrop-Setup.exe** from [Releases](../../releases/latest).
-2. Run it. It installs for your user only (no admin rights) with a Start menu
-   entry and, if you like, *Send to* and *Start with Windows*.
-3. Click *Allow* when Windows Firewall asks, so phones can reach your PC.
+Don't want to install anything? Take the portable **MultiDrop.exe** from the
+same page. Uninstall any time in *Settings → Apps*.
 
-Uninstall in *Settings → Apps*. Prefer no install? Run the portable
-**MultiDrop.exe** instead.
+### Ubuntu / Debian
 
-MultiDrop opens in its own window and explains on first start how phones
-send to it. Closing the window keeps it running in the notification area, so
-you can still receive. In the
-window's *Settings* (or the tray menu) you can turn on *Start with Windows*
-and the *Send to* entry. Then right-click files in Explorer → *Send to* →
-*MultiDrop* and click a device. *Play this PC's sound on a speaker* sends the
-PC's audio to AirPlay speakers.
-
-### Ubuntu / Debian (apt)
-
-Ubuntu 24.04+ and Debian 13+. Add the repository once, then install and update
-with apt:
+Ubuntu 24.04+ and Debian 13+. Add the repository once, then MultiDrop updates
+with the rest of your system:
 
 ```bash
 curl -fsSL https://digitaldanis.github.io/multidrop/multidrop-archive-keyring.gpg \
@@ -80,47 +71,101 @@ echo "deb [signed-by=/usr/share/keyrings/multidrop-archive-keyring.gpg] https://
 sudo apt update && sudo apt install multidrop
 ```
 
-Or download `multidrop_*_all.deb` from [Releases](../../releases/latest) and run
-`sudo apt install ./multidrop_*_all.deb`. For AirPlay mirroring run
+Or grab `multidrop_*_all.deb` from [Releases](../../releases/latest) and run
+`sudo apt install ./multidrop_*_all.deb`. For AirPlay mirroring, run
 `multidrop-fetch-doubletake` once.
 
-### Other Linux distributions
+<details>
+<summary><b>Fedora, Arch, openSUSE and other distributions</b></summary>
 
 ```bash
 git clone https://github.com/digitaldanis/multidrop.git ~/multidrop
 ~/multidrop/tools/install-desktop.sh --pin
 ```
 
-Fedora, Arch, openSUSE and others (Python ≥ 3.11, GTK 4, libadwaita). The
-installer needs no root and tells you if a system package is missing. Uninstall
-with `tools/install-desktop.sh --remove`.
+Needs Python ≥ 3.11, GTK 4 and libadwaita. The installer needs no root and
+tells you if a system package is missing. Uninstall with
+`tools/install-desktop.sh --remove`.
 
-## Using it
+</details>
 
-- **Top bar menu** – nearby devices, AirDrop on/off, *Mirror screen*, *Play audio on*.
-- **Window** – drop files on a device bubble, or click it. Samsung phones that
-  don't show up: use the **QR code** tile.
-- **File manager** – right-click → *Send with MultiDrop*, or drop files on the dock icon.
-- **Receiving** – just send from your phone; MultiDrop asks before accepting.
-  Files land in `~/Downloads/multidrop`.
+## How to use it
 
-On GNOME the top bar icon needs the *AppIndicator and KStatusNotifierItem
-Support* extension (preinstalled on Ubuntu).
+**Receive:** just send from your phone. MultiDrop shows up like any other
+nearby device and asks you before it accepts anything. Files land in
+`Downloads/multidrop` in your home folder.
 
-## AirDrop setup (Linux)
+**Send:** drop files on a device in the MultiDrop window, or click the device
+and pick them.
 
-AirDrop uses [omdrop-owl](https://github.com/t4t5/omdrop-owl), which recreates
-Apple's AWDL radio link in software (tested with MediaTek MT7925; Intel cards in
-exclusive mode). Install it once, then turn AirDrop on in the app:
+- **Windows** – MultiDrop opens in its own window and explains on first start
+  how phones send to it. Closing the window keeps it receiving in the
+  notification area. Turn on *Send to* in *Settings*, then right-click files in
+  Explorer → *Send to* → *MultiDrop*. *Play this PC's sound on a speaker* sends
+  your audio to an AirPlay speaker.
+- **Linux** – the top bar menu lists nearby devices and has AirDrop on/off,
+  *Mirror screen* and *Play audio on*. In the file manager, right-click →
+  *Send with MultiDrop*. On GNOME the top bar icon needs the *AppIndicator and
+  KStatusNotifierItem Support* extension (preinstalled on Ubuntu).
+- **Phone doesn't show up?** Scan the **QR code** tile with its camera
+  (Android/Samsung), or use the **browser download** tile: scan, enter the PIN,
+  download. That works on every phone.
+
+## AirDrop on Linux
+
+AirDrop needs Apple's AWDL radio link, which
+[omdrop-owl](https://github.com/t4t5/omdrop-owl) recreates in software (tested
+with MediaTek MT7925; Intel cards in exclusive mode). Install it once, then
+turn AirDrop on in the app:
 
 ```bash
 tools/build-omdrop-owl.sh
 sudo apt install ./build/airdrop/omdrop-owl_0.1.0-1_amd64.deb
 ```
 
-If your Wi-Fi isn't on channel 6, 44 or 149, MultiDrop temporarily switches to
-the same network on one of those channels and switches back afterwards – no
-router changes needed. Details: [docs/INSTALL-ROOT.md](docs/INSTALL-ROOT.md).
+If your Wi-Fi isn't on channel 6, 44 or 149, MultiDrop briefly moves to the
+same network on one of those channels and moves back afterwards – no router
+changes needed. Details: [docs/INSTALL-ROOT.md](docs/INSTALL-ROOT.md).
+
+## FAQ
+
+<details>
+<summary><b>How do I send from an iPhone to Windows?</b></summary>
+
+AirDrop needs Apple's radio link, which Windows can't do. Use the **browser
+download** (scan the QR code, enter the PIN) or the free LocalSend app on the
+iPhone.
+</details>
+
+<details>
+<summary><b>Nothing arrives on Windows.</b></summary>
+
+Windows Firewall probably blocked MultiDrop on first start. Allow it for
+private networks in *Windows Security → Firewall → Allow an app*, and make
+sure your Wi-Fi is set to *Private*.
+</details>
+
+<details>
+<summary><b>My Samsung or Android phone doesn't show up.</b></summary>
+
+Scan the **QR code** tile in MultiDrop with the phone's camera. That works
+even when the phone can't see the PC on the network.
+</details>
+
+<details>
+<summary><b>Where do received files go?</b></summary>
+
+Into `Downloads/multidrop` in your home folder; change it with `download_dir`
+in the config. On Windows, *Open received files* in the window or *Received
+files* in the tray menu opens it.
+</details>
+
+<details>
+<summary><b>Does anything leave my network?</b></summary>
+
+No. There is no server and no account; transfers are local and encrypted
+where the protocol supports it.
+</details>
 
 ## Command line
 
@@ -135,38 +180,22 @@ multidrop share photos/                    # browser download with QR code + PIN
 `multidropd` is the background service behind the apps (systemd unit in
 `data/systemd/`). Config: `~/.config/multidrop/config.toml`.
 
-## FAQ
-
-**My Samsung or Android phone doesn't show up.** Scan the **QR code** tile in
-MultiDrop with the phone's camera. That works even when the phone can't see
-the PC on the network.
-
-**How do I send from an iPhone to Windows?** AirDrop needs Apple's radio link,
-which Windows can't do. Use the **browser download** (scan the QR code, enter
-the PIN) or the free LocalSend app on the iPhone.
-
-**Nothing arrives on Windows.** Windows Firewall probably blocked MultiDrop on
-first start. Allow it for private networks in *Windows Security → Firewall →
-Allow an app*, and make sure your Wi-Fi is set to *Private*.
-
-**Where do received files go?** Into `Downloads/multidrop` in your home folder
-(change it with `download_dir` in the config). On Windows, *Open received
-files* in the window or *Received files* in the tray menu opens it.
-
-**Does anything leave my network?** No. There is no server and no account;
-transfers are local and encrypted where the protocol supports it.
-
 ## Status
 
-Tested: AirDrop Linux → Mac, Quick Share and LocalSend against other
-implementations and the official LocalSend app, the Linux desktop app, the
-Windows build, installer and app window in CI, Windows AirPlay audio against
-shairport-sync. Not fully verified yet on real devices: Quick Share with
-Android/Samsung phones, AirPlay mirroring and audio (no real Apple TV, HomePod
-or Sonos yet), Windows on real hardware.
-Bug reports welcome.
+**Tested:** AirDrop Linux → Mac; Quick Share and LocalSend against other
+implementations and the official LocalSend app; the Linux desktop app; the
+Windows build, installer and app window in CI; Windows AirPlay audio against
+shairport-sync.
 
-## Project layout
+**Not verified on real devices yet:** Quick Share with Android/Samsung phones,
+AirPlay mirroring and audio (no real Apple TV, HomePod or Sonos yet), Windows
+on real hardware. [Device reports](../../issues/new/choose) are very welcome.
+
+## Development
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -e ".[test]" && .venv/bin/pytest -q
+```
 
 ```
 src/multidrop/     service, protocols, Linux desktop app, Windows app
@@ -177,10 +206,9 @@ packaging/         .deb and APT repository, Windows build and installer, release
 docs/              architecture, protocol research, root setup
 ```
 
-Development: `python3 -m venv .venv && .venv/bin/pip install -e ".[test]" && .venv/bin/pytest -q`.
-Contributions and device reports are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
-Design notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
-[docs/RESEARCH.md](docs/RESEARCH.md).
+How it fits together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
+protocol notes: [docs/RESEARCH.md](docs/RESEARCH.md) ·
+how to help: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Credits & license
 
