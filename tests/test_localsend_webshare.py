@@ -9,7 +9,7 @@ import aiohttp
 import pytest
 
 from conftest import WINDOWS
-from multidrop.backends.localsend.webshare import MAX_FAILS_PER_IP, WebShare
+from multidrop.backends.localsend.webshare import MAX_FAILS_PER_IP, MAX_FAILS_TOTAL, WebShare
 
 # Markup in a file name must be escaped; Windows forbids < and > in names.
 NAME = "x&y.txt" if WINDOWS else "<i>x&y.txt"
@@ -98,6 +98,20 @@ async def test_spec_api_and_rate_limit(share):
                 assert r.status == 401
         async with http.post(prep + "&pin=987654") as r:
             assert r.status == 429                      # locked out, even with the right PIN
+
+
+async def test_too_many_wrong_pins_stop_the_share(share, monkeypatch):
+    """Guessing from many addresses: the share stops after MAX_FAILS_TOTAL."""
+    s, events, base = await share(pin="987654")
+    guesses = iter(range(MAX_FAILS_TOTAL))
+    monkeypatch.setattr(s, "_client", lambda request: f"10.0.0.{next(guesses, 0) // 2}")
+    prep = f"{base}/api/localsend/v2/prepare-download?k={s.key}&pin=111111"
+    async with aiohttp.ClientSession() as http:
+        for _ in range(MAX_FAILS_TOTAL):
+            async with http.post(prep) as r:
+                assert r.status == 401
+    await asyncio.wait_for(s.stopped.wait(), 5)
+    assert events[-1] == ("share_stopped", {"reason": "too many wrong PINs", "downloads": 0})
 
 
 async def test_no_pin_and_expiry(share):

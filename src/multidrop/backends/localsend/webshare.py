@@ -80,6 +80,7 @@ class WebShare:
         self.stopped = asyncio.Event()
         self._runner: web.AppRunner | None = None
         self._timer: asyncio.TimerHandle | None = None
+        self._stopping: asyncio.Task | None = None     # held so it isn't garbage collected
 
     # -- lifecycle --------------------------------------------------------
 
@@ -114,8 +115,13 @@ class WebShare:
             self.public_address = default_address() if self.host == "0.0.0.0" else self.host
         self.expires = time.time() + self.minutes * 60
         self._timer = asyncio.get_running_loop().call_later(
-            self.minutes * 60, lambda: asyncio.ensure_future(self.stop("expired")))
+            self.minutes * 60, self._stop_soon, "expired")
         self.on_event("share_started", self.status())
+
+    def _stop_soon(self, reason: str) -> None:
+        """Stop from a callback or a request handler, once."""
+        if self._stopping is None:
+            self._stopping = asyncio.ensure_future(self.stop(reason))
 
     async def stop(self, reason: str = "stopped") -> None:
         if self._runner is None:
@@ -158,7 +164,7 @@ class WebShare:
             self.fails[ip] = self.fails.get(ip, 0) + 1
             self.on_event("share_wrong_pin", {"from": ip})
             if sum(self.fails.values()) >= MAX_FAILS_TOTAL:
-                asyncio.ensure_future(self.stop("too many wrong PINs"))
+                self._stop_soon("too many wrong PINs")
         return web.Response(status=401, text="PIN required" if pin is None else "Invalid PIN")
 
     def _new_session(self, request: web.Request) -> str:
