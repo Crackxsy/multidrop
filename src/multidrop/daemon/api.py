@@ -204,6 +204,19 @@ async def _json_body(request: web.Request) -> dict:
     return body
 
 
+def _paths(value) -> list[Path]:
+    """A JSON "paths" value: a list of existing absolute paths (or nothing)."""
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(isinstance(p, str) for p in value):
+        raise ValueError("paths: a list of strings")
+    paths = [Path(p).expanduser() for p in value]
+    for p in paths:
+        if not p.is_absolute() or not p.exists():
+            raise ValueError(f"not an existing absolute path: {p}")
+    return paths
+
+
 async def send(request: web.Request) -> web.Response:
     d = request.app[DAEMON]
     try:
@@ -211,10 +224,7 @@ async def send(request: web.Request) -> web.Response:
             job = await _send_upload(request, d)
         else:
             body = await _json_body(request)
-            paths = [Path(p).expanduser() for p in body.get("paths") or []]
-            for p in paths:
-                if not p.is_absolute() or not p.exists():
-                    return _json_error(400, f"not an existing absolute path: {p}")
+            paths = _paths(body.get("paths"))
             if not paths and not body.get("text"):
                 return _json_error(400, "nothing to send")
             job = await d.send(_target(body.get("target")), paths,
@@ -299,9 +309,9 @@ async def share_start(request: web.Request) -> web.Response:
                 raise
         else:
             opts = await _json_body(request)
-            paths = [Path(p).expanduser() for p in opts.get("paths") or []]
-            if not paths or not all(p.is_absolute() and p.exists() for p in paths):
-                return _json_error(400, "paths must be existing absolute paths")
+            paths = _paths(opts.get("paths"))
+            if not paths:
+                return _json_error(400, "nothing to share")
             result = await d.start_share(paths, **_share_options(opts))
     except (TransferError, ValueError, OSError) as e:
         return _json_error(400, str(e) or type(e).__name__)
@@ -313,7 +323,10 @@ def _share_options(opts: dict) -> dict:
     pin = str(opts.get("pin") or "")
     if pin and not (pin.isdigit() and 4 <= len(pin) <= 12):
         raise ValueError("PIN: 4 to 12 digits")
-    minutes = float(opts.get("minutes") or 15)
+    try:
+        minutes = float(opts.get("minutes") or 15)
+    except (TypeError, ValueError):
+        raise ValueError("minutes: a number") from None
     if not 0 < minutes <= 24 * 60:
         raise ValueError("minutes: more than 0, at most 1440")
     address = str(opts.get("address") or "") or None
@@ -332,12 +345,12 @@ async def selection_get(request: web.Request) -> web.Response:
 async def selection_add(request: web.Request) -> web.Response:
     d = request.app[DAEMON]
     body = await _json_body(request)
-    raw = body.get("paths")
-    if not isinstance(raw, list) or not raw:
+    try:
+        paths = _paths(body.get("paths"))
+    except ValueError as e:
+        return _json_error(400, str(e))
+    if not paths:
         return _json_error(400, "paths: a non-empty list")
-    paths = [Path(str(p)).expanduser() for p in raw]
-    if not all(p.is_absolute() and p.exists() for p in paths):
-        return _json_error(400, "paths must be existing absolute paths")
     d.select(paths)
     return web.json_response({"paths": d.selection})
 

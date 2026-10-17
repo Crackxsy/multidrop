@@ -179,6 +179,11 @@ async def test_send_errors(daemon, tmp_path):
                                            "text": "x"}))[0] == 400
     assert (await post(sess, "/api/send", {"target": {"qr": True}, "paths": ["relative.txt"]}))[0] == 400
     assert (await post(sess, "/api/send", {"target": {"qr": True}}))[0] == 400
+    for paths in ("/etc", [1], [None], {"a": 1}):      # malformed: 400, not a server error
+        assert (await post(sess, "/api/send", {"target": {"qr": True}, "paths": paths}))[0] == 400
+        assert (await post(sess, "/api/share", {"paths": paths}))[0] == 400
+        assert (await post(sess, "/api/selection", {"paths": paths}))[0] == 400
+    assert (await post(sess, "/api/share", {"paths": [str(tmp_path)], "minutes": [5]}))[0] == 400
     async with sess.post("/api/send", data=b"{oops",
                          headers={"Content-Type": "application/json"}) as r:
         assert r.status == 400
