@@ -20,7 +20,9 @@ jobs:
           python-version: "3.12"
       - name: AirPlay receiver for the RAOP interop test
         run: sudo apt-get install -y -qq shairport-sync
-      - run: pip install -e ".[test]"
+      - run: pip install -e ".[test]" ruff
+      - name: Lint (ruff)
+        run: ruff check src tests tools
       - run: pytest -q
 
   test-windows:

@@ -36,3 +36,14 @@ multidrop = ["daemon/web/*", "backends/quickshare/proto/*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["src/multidrop/backends/quickshare/pb"]   # generated protobuf code
+
+[tool.ruff.lint]
+select = ["F", "E9"]          # real bugs: undefined names, unused imports, syntax errors
+ignore = ["F722"]             # D-Bus signatures as return annotations ("a{qv}")
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_daemon_offers.py" = ["F811"]   # fixtures imported from test_daemon
