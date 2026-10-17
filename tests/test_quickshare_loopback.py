@@ -9,8 +9,7 @@ import pytest
 from multidrop.backends.quickshare import QuickShareBackend, connection, frames, outbound
 from multidrop.backends.quickshare.crypto import Ukey2Client
 from multidrop.backends.quickshare.mdns import MdnsPublisher, browse
-from multidrop.backends.quickshare.pb import (offline_wire_formats_pb2 as ow,
-                                              ukey_pb2)
+from multidrop.backends.quickshare.pb import ukey_pb2
 from multidrop.core import TransferError
 
 
