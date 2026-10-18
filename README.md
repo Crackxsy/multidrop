@@ -194,13 +194,17 @@ on real hardware. [Device reports](../../issues/new/choose) are very welcome.
 ## Web version
 
 `pages/` is the same interface as the desktop UI, running in a browser on
-GitHub Pages (published to `web/` on the `gh-pages` branch). It has no daemon:
-devices in the same room find each other through
-[AnEntrypoint/wireweave](https://github.com/AnEntrypoint/wireweave) (nostr
-presence and signalling, WebRTC data channels), and files go directly between
-the browsers. Join a room by scanning the QR code on the page. Only browser-to-browser
-transfers work there: AirDrop, Quick Share, LocalSend, AirPlay and the desktop
-integration need the native app.
+GitHub Pages (published to `web/` on the `gh-pages` branch). It has no daemon.
+Devices find each other through [AnEntrypoint/wireweave](https://github.com/AnEntrypoint/wireweave):
+nostr relays carry presence and WebRTC signalling, and the files go directly
+between the browsers.
+
+Pair once: show a 6-digit code on one device and enter it on the other, or
+scan the QR code shown there. The host approves the other device, and both
+keep a shared zone secret in local storage. Paired devices rejoin the zone
+on every page load while their page is open, so files can be dropped on them
+from any page. Only browser-to-browser transfers work there: AirDrop, Quick
+Share, LocalSend, AirPlay and the desktop integration need the native app.
 
 Clone with submodules to work on it: `git clone --recurse-submodules …`, or
 `git submodule update --init` in an existing checkout.
