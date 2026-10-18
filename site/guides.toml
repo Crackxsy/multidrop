@@ -8,6 +8,9 @@
 
 [[guide]]
 slug = "airdrop-for-linux"
+card = "AirDrop for Linux"
+teaser = "Send and receive with iPhone, iPad and Mac"
+platform = "linux"
 title = "AirDrop for Linux – send files between Linux and iPhone, iPad or Mac"
 description = "Real AirDrop on Linux with MultiDrop: send and receive files between Ubuntu, Debian, Fedora or Arch and an iPhone, iPad or Mac. Free and open source."
 h1 = "AirDrop for Linux"
@@ -18,8 +21,8 @@ sections = [
   ["Wi-Fi channel", "AWDL lives on channel 6, 44 or 149. If your Wi-Fi network is on another channel, MultiDrop briefly moves to the same network on one of those channels and moves back afterwards. No router changes are needed."],
 ]
 steps = [
-  "Install MultiDrop from the APT repository (Ubuntu 24.04+, Debian 13+) or with tools/install-desktop.sh on Fedora, Arch and openSUSE.",
-  "Build and install omdrop-owl once: tools/build-omdrop-owl.sh, then install the .deb it produces.",
+  "Install MultiDrop from the APT repository (Ubuntu 24.04+, Debian 13+) or with `tools/install-desktop.sh` on Fedora, Arch and openSUSE.",
+  "Build and install omdrop-owl once: `tools/build-omdrop-owl.sh`, then install the .deb it produces.",
   "Turn on AirDrop in the MultiDrop menu in the top bar.",
   "On the iPhone, tap Share → AirDrop and pick your PC. Accept the transfer on the PC.",
 ]
@@ -31,6 +34,9 @@ faq = [
 
 [[guide]]
 slug = "airdrop-for-windows"
+card = "AirDrop for Windows?"
+teaser = "What works between iPhone and a Windows PC"
+platform = "windows"
 title = "AirDrop for Windows – how to share files between iPhone and Windows PC"
 description = "Is there AirDrop for Windows? Not Apple's radio – but MultiDrop gets files between iPhone and Windows 10/11 without cable, iTunes or cloud. Free and open source."
 h1 = "AirDrop for Windows: what works and what doesn't"
@@ -52,6 +58,9 @@ faq = [
 
 [[guide]]
 slug = "quick-share-for-linux"
+card = "Quick Share for Linux"
+teaser = "Android and Samsung phones send to your PC"
+platform = "linux"
 title = "Quick Share for Linux – receive files from Android and Samsung phones"
 description = "Quick Share (Nearby Share) on Linux: your Ubuntu, Debian, Fedora or Arch PC appears in the share menu of Android and Samsung phones. Send and receive, no Google account."
 h1 = "Quick Share (Nearby Share) for Linux"
@@ -59,12 +68,13 @@ lead = "Android and Samsung phones have Quick Share built in. MultiDrop makes yo
 sections = [
   ["How it works", "MultiDrop implements Google's Quick Share protocol (formerly Nearby Share), which Android and Samsung phones use. Phones find the PC on your Wi-Fi (mDNS), then send the files encrypted over your local network."],
   ["Samsung phones", "Some Samsung phones only show contacts or devices signed in to the same account. Then scan the **QR code** tile in MultiDrop with the phone camera and the transfer starts."],
+  ["Tested with real phones", "Quick Share is tested with real Android and Samsung Galaxy phones."],
   ["Also on the same PC", "The same app speaks LocalSend and – with a supported Wi-Fi card – AirDrop, so iPhones and Android phones can send to the same PC."],
 ]
 steps = [
   "Install MultiDrop (APT repository for Ubuntu and Debian, installer script for other distributions).",
   "On the phone, tap Share → Quick Share and pick your PC.",
-  "Accept the transfer on the PC. Files land in Downloads/multidrop.",
+  "Accept the transfer on the PC. Files land in `Downloads/multidrop`.",
 ]
 faq = [
   ["Do I need a Google account on the PC?", "No. MultiDrop doesn't sign in anywhere."],
@@ -73,6 +83,9 @@ faq = [
 
 [[guide]]
 slug = "quick-share-for-windows"
+card = "Quick Share for Windows"
+teaser = "Open source, no Google account"
+platform = "windows"
 title = "Quick Share for Windows without a Google account – open source"
 description = "Send files between Windows 10/11 and Android or Samsung phones with Quick Share – plus LocalSend and AirPlay in the same open-source app. No Google account."
 h1 = "Quick Share for Windows, open source"
@@ -80,6 +93,7 @@ lead = "MultiDrop puts your Windows PC into the Quick Share menu of Android and 
 sections = [
   ["How it compares", "Google offers its own Quick Share app for Windows. MultiDrop is an open-source alternative that doesn't sign in anywhere and adds what Google's app doesn't: LocalSend for iPhones, a browser download for any phone, and AirPlay screen mirroring and audio to Apple TV, HomePod and Sonos."],
   ["Samsung phones", "If a Samsung phone doesn't list the PC, scan the **QR code** tile in MultiDrop with its camera."],
+  ["Tested with real phones", "Quick Share is tested with real Android and Samsung Galaxy phones."],
 ]
 steps = [
   "Download MultiDrop-Setup.exe (or the portable MultiDrop.exe) and run it.",
@@ -93,6 +107,9 @@ faq = [
 
 [[guide]]
 slug = "iphone-to-pc"
+card = "iPhone to PC"
+teaser = "Photos and files over Wi-Fi, no cable"
+platform = "both"
 title = "Transfer files from iPhone to PC wirelessly – no cable, no iTunes"
 description = "How to send photos, videos and files from an iPhone to a Windows or Linux PC over Wi-Fi with MultiDrop: AirDrop on Linux, LocalSend or a QR code on Windows."
 h1 = "Send files from an iPhone to a PC without a cable"
@@ -108,16 +125,19 @@ faq = [
 
 [[guide]]
 slug = "mirror-pc-to-apple-tv"
+card = "Mirror to Apple TV"
+teaser = "AirPlay from Windows and Linux"
+platform = "both"
 title = "Mirror a Windows or Linux PC to Apple TV with AirPlay"
 description = "AirPlay screen mirroring from Windows 10/11 and Linux to Apple TV, Mac and AirPlay TVs from Samsung, LG and Roku – plus PC audio on HomePod and Sonos. Free."
 h1 = "AirPlay from Windows and Linux to an Apple TV"
 lead = "Show your PC screen on an Apple TV or AirPlay TV, or play the PC's sound on a HomePod or Sonos speaker – from Windows or Linux."
 sections = [
-  ["Screen mirroring", "MultiDrop uses [doubletake](https://github.com/omarroth/doubletake) as its AirPlay mirroring engine. It works with Apple TV, Macs and AirPlay TVs from Samsung, LG, Roku and others. The first time, enter the code the TV shows."],
+  ["Screen mirroring", "MultiDrop uses [doubletake](https://github.com/omarroth/doubletake) as its AirPlay mirroring engine. It works with Apple TV, Macs and AirPlay TVs from Samsung, LG, Roku and others. The first time, enter the code the TV shows. Tested with real Apple TVs."],
   ["Audio", "Play this PC's sound on a speaker sends your PC audio to AirPlay speakers such as HomePod, Sonos and Apple TV. Receivers that require a password for AirPlay 1 streams are marked as not supported."],
 ]
 steps = [
-  "Windows: install MultiDrop-Setup.exe (the portable .exe has no mirroring). Linux: install MultiDrop and run multidrop-fetch-doubletake once.",
+  "Windows: install MultiDrop-Setup.exe (the portable .exe has no mirroring). Linux: install MultiDrop and run `multidrop-fetch-doubletake` once.",
   "Windows: click Show this PC's screen on a TV. Linux: open Mirror screen in the top bar menu.",
   "Pick the TV and enter the code it shows the first time.",
 ]
@@ -127,6 +147,9 @@ faq = [
 
 [[guide]]
 slug = "alternatives"
+card = "Compared"
+teaser = "LocalSend, NearDrop, rquickshare, OpenDrop"
+platform = "both"
 title = "MultiDrop vs LocalSend, NearDrop, rquickshare and OpenDrop"
 description = "How MultiDrop compares to LocalSend, NearDrop, rquickshare, OpenDrop and Google's Quick Share for Windows: platforms, protocols, AirDrop, Quick Share, AirPlay."
 h1 = "MultiDrop compared with other file sharing apps"

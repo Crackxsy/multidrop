@@ -254,16 +254,18 @@ multidrop share photos/                    # browser download with QR code + PIN
 
 ## Status
 
-**Tested:** AirDrop Linux → Mac; Quick Share and LocalSend against other
-implementations and the official LocalSend app; the Linux desktop app; the
-Windows build, installer and app window in CI; Windows AirPlay audio against
-shairport-sync; Windows screen mirroring in CI against doubletake's test
-receiver (synthetic video).
+**Tested with real devices:** Quick Share with Android and Samsung Galaxy
+phones; AirPlay screen mirroring with Apple TVs; AirDrop Linux → Mac.
 
-**Not verified on real devices yet:** Quick Share with Android/Samsung phones,
-AirPlay mirroring and audio with a real Apple TV, HomePod or Sonos, Windows on
-real hardware. [Device reports](../../issues/new/choose) are very welcome –
-"Galaxy S24 → Windows 11 works" helps a lot.
+**Tested in CI and against other implementations:** LocalSend with the official
+LocalSend app; the Windows build, installer and app window; Windows AirPlay
+audio against shairport-sync; screen mirroring against doubletake's test
+receiver.
+
+**Not verified yet:** AirPlay audio on HomePod and Sonos, Windows on more
+hardware. [Device
+reports](../../issues/new/choose) are very welcome – "Galaxy S24 → Windows 11
+works" helps a lot.
 
 ⭐ **If MultiDrop saved you a cable, star the repo** – it helps other people
 find it.

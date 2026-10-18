@@ -47,7 +47,9 @@ def test_guides_are_complete():
     guides = tomllib.loads((ROOT / "site" / "guides.toml").read_text(encoding="utf-8"))["guide"]
     assert len({g["slug"] for g in guides}) == len(guides)
     for g in guides:
-        assert {"slug", "title", "description", "h1", "lead", "sections", "faq"} <= set(g), g.get("slug")
+        assert {"slug", "card", "teaser", "platform", "title", "description", "h1", "lead", "sections",
+                "faq"} <= set(g), g.get("slug")
+        assert g["platform"] in {"linux", "windows", "both"}, g["slug"]
         assert re.fullmatch(r"[a-z0-9-]+", g["slug"])
         assert len(g["description"]) <= 170, g["slug"]
 

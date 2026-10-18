@@ -29,6 +29,7 @@ APT = """curl -fsSL https://digitaldanis.github.io/multidrop/multidrop-archive-k
 echo "deb [signed-by=/usr/share/keyrings/multidrop-archive-keyring.gpg] https://digitaldanis.github.io/multidrop stable main" \\
   | sudo tee /etc/apt/sources.list.d/multidrop.list
 sudo apt update && sudo apt install multidrop"""
+ICON = "https://raw.githubusercontent.com/digitaldanis/multidrop/main/data/icons/multidrop.svg"
 KEY_FINGERPRINT = "93249FD950BF046802D087C2FE64BBDE5A1E946F"
 
 CSS = """
@@ -36,23 +37,37 @@ CSS = """
 @media (prefers-color-scheme:dark){:root{--bg:#121214;--fg:#ececee;--muted:#a0a0a8;--card:#1c1c20;--line:#2e2e34;--accent:#5a9cff;--accent-fg:#0b1220;--code:#1a1a1e}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:52rem;margin:0 auto;padding:1.5rem 1rem 3rem}
-nav.langs{display:flex;flex-wrap:wrap;gap:.35rem .8rem;font-size:.85rem;padding:.6rem 1rem;border-bottom:1px solid var(--line);justify-content:center}
-nav.langs a{color:var(--muted);text-decoration:none}nav.langs a[aria-current]{color:var(--fg);font-weight:600}
-img.banner{width:100%;height:auto;border-radius:14px;margin:.5rem 0 1rem}
-h1{font-size:clamp(1.6rem,4.5vw,2.4rem);line-height:1.2;margin:.5rem 0}
-h2{font-size:1.25rem;margin:2.2rem 0 .6rem}
-.lead{font-size:1.1rem;color:var(--muted)}
-.cta{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0}
-.cta a{padding:.65rem 1.1rem;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);text-decoration:none;font-weight:600}
-.cta a.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-ul.features{padding:0;list-style:none;display:grid;gap:.6rem}
-ul.features li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.75rem 1rem}
-pre{background:var(--code);padding:1rem;border-radius:10px;overflow-x:auto;font-size:.85rem}
-details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.7rem 1rem;margin:.5rem 0}
-summary{cursor:pointer;font-weight:600}
-footer{color:var(--muted);font-size:.85rem;margin-top:3rem;border-top:1px solid var(--line);padding-top:1rem}
 a{color:var(--accent)}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+header.top .bar{max-width:56rem;margin:0 auto;padding:.6rem 1rem;display:flex;align-items:center;gap:1rem}
+.brand{display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--fg);text-decoration:none;margin-inline-end:auto}
+.brand img{width:26px;height:26px}
+header.top nav{display:flex;align-items:center;gap:1rem;font-size:.92rem}
+header.top nav>a{color:var(--muted);text-decoration:none}header.top nav>a:hover{color:var(--fg)}
+.lang{position:relative}
+.lang summary{list-style:none;cursor:pointer;color:var(--muted);font-size:.92rem}.lang summary::-webkit-details-marker{display:none}
+.lang div{position:absolute;inset-inline-end:0;top:2rem;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.5rem;display:grid;grid-template-columns:repeat(2,minmax(8rem,auto));gap:.1rem;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.lang div a{padding:.3rem .6rem;border-radius:8px;color:var(--fg);text-decoration:none;font-size:.9rem}.lang div a:hover{background:var(--code)}.lang div a[aria-current]{font-weight:700}
+main{max-width:56rem;margin:0 auto;padding:2rem 1rem 3rem}
+img.banner{width:100%;height:auto;border-radius:16px;margin:1.5rem 0 .5rem}
+h1{font-size:clamp(1.8rem,5vw,2.6rem);line-height:1.15;letter-spacing:-.01em;margin:.5rem 0 .8rem}
+h2{font-size:1.3rem;margin:2.8rem 0 .8rem}
+.lead{font-size:1.15rem;color:var(--muted);max-width:44rem}
+.trust{font-size:.9rem;color:var(--muted)}
+.cta{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.4rem 0}
+.cta a{padding:.65rem 1.1rem;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);text-decoration:none;font-weight:600;text-align:center}
+.cta a.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+ul.features{padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.7rem}
+ul.features li,.cards a,.faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.85rem 1rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.7rem}
+.cards a{color:var(--fg);text-decoration:none;display:block}.cards a:hover{border-color:var(--accent)}
+.cards strong{display:block}.cards span{color:var(--muted);font-size:.88rem}
+pre{direction:ltr;text-align:left;background:var(--code);padding:1rem;border-radius:12px;overflow-x:auto;font-size:.82rem}
+code{unicode-bidi:isolate;font-size:.9em;background:var(--code);padding:.05rem .3rem;border-radius:5px}pre code{background:none;padding:0}
+.faq details{margin:.5rem 0}.faq summary{cursor:pointer;font-weight:600}
+ol li{margin:.3rem 0}
+footer{color:var(--muted);font-size:.85rem;margin-top:3.5rem;border-top:1px solid var(--line);padding-top:1rem}
+@media (max-width:540px){.cta a{flex:1 1 100%}header.top nav .hide-sm{display:none}}
 """
 
 
@@ -69,14 +84,15 @@ def url(lang: str) -> str:
 
 
 def inline(text: str) -> str:
-    """**bold** and [links](https://…) in the strings, everything else escaped."""
+    """**bold**, `code` and [links](https://…) in the strings, everything else escaped."""
     text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html.escape(text))
+    text = re.sub(r"`(.+?)`", r"<code>\1</code>", text)
     return re.sub(r"\[(.+?)\]\((https://[^)\s]+)\)", r'<a href="\2">\1</a>', text)
 
 
 def plain(text: str) -> str:
     """The strings without **bold** and link markup, for meta data."""
-    return re.sub(r"\[(.+?)\]\(https://[^)\s]+\)", r"\1", text.replace("**", ""))
+    return re.sub(r"\[(.+?)\]\(https://[^)\s]+\)", r"\1", text.replace("**", "").replace("`", ""))
 
 
 def meta(lang: str, title: str, description: str, canonical: str) -> str:
@@ -98,11 +114,20 @@ def meta(lang: str, title: str, description: str, canonical: str) -> str:
 <meta name="twitter:description" content="{e(description)}">
 <meta name="twitter:image" content="{BANNER}">
 <meta name="theme-color" content="#1f6feb">
-<link rel="icon" href="https://raw.githubusercontent.com/digitaldanis/multidrop/main/data/icons/multidrop.svg" type="image/svg+xml">"""
+<link rel="icon" href="{ICON}" type="image/svg+xml">"""
 
 
-def guide_links(guides: list[dict]) -> str:
-    return " · ".join(f'<a href="{BASE}{g["slug"]}/">{html.escape(g["h1"])}</a>' for g in guides)
+def guide_cards(guides: list[dict]) -> str:
+    return '<div class="cards" lang="en" dir="ltr">' + "".join(
+        f'<a href="{BASE}{g["slug"]}/"><strong>{html.escape(g["card"])}</strong>'
+        f'<span>{html.escape(g["teaser"])}</span></a>' for g in guides) + "</div>"
+
+
+def header(lang_menu: str = "") -> str:
+    return f"""<header class="top"><div class="bar">
+<a class="brand" href="{BASE}"><img src="{ICON}" alt="" width="26" height="26">MultiDrop</a>
+<nav><a href="{BASE}#guides" class="hide-sm">Guides</a><a href="{RELEASES}" class="hide-sm">Download</a><a href="{REPO}">GitHub</a>{lang_menu}</nav>
+</div></header>"""
 
 
 def ld(*items: dict) -> str:
@@ -136,10 +161,12 @@ def page(lang: str, t: dict, all_langs: dict[str, dict], guides: list[dict]) -> 
     e = html.escape
     alternates = "\n".join(f'<link rel="alternate" hreflang="{code}" href="{url(code)}">'
                            for code in all_langs) + f'\n<link rel="alternate" hreflang="x-default" href="{BASE}">'
-    langs = " ".join(
+    langs = "".join(
         f'<a href="{url(code)}" hreflang="{code}" lang="{code}"'
         + (' aria-current="page"' if code == lang else "") + f'>{e(s["name"])}</a>'
         for code, s in all_langs.items())
+    lang_menu = (f'<details class="lang"><summary aria-label="{e(t["languages"])}">🌐 {e(t["name"])}</summary>'
+                 f'<div>{langs}</div></details>')
     features = "\n".join(f"<li>{inline(f)}</li>" for f in t["features"])
     faq = "\n".join(f"<details><summary>{e(q)}</summary><p>{e(a)}</p></details>" for q, a in t["faq"])
     direction = t.get("dir", "ltr")
@@ -152,9 +179,8 @@ def page(lang: str, t: dict, all_langs: dict[str, dict], guides: list[dict]) -> 
 <style>{CSS}</style>
 </head>
 <body>
-<nav class="langs" aria-label="{e(t["languages"])}">{langs}</nav>
+{header(lang_menu)}
 <main>
-<img class="banner" src="{BANNER}" alt="{e(t["title"])}" width="1280" height="640">
 <h1>{e(t["h1"])}</h1>
 <p class="lead">{e(t["lead"])}</p>
 <div class="cta">
@@ -162,6 +188,7 @@ def page(lang: str, t: dict, all_langs: dict[str, dict], guides: list[dict]) -> 
 <a href="#linux">{e(t["linux"])}</a>
 <a href="{REPO}">★ {e(t["source"])}</a>
 </div>
+<img class="banner" src="{BANNER}" alt="{e(t["title"])}" width="1280" height="640">
 <h2>{e(t["features_title"])}</h2>
 <ul class="features">
 {features}
@@ -170,9 +197,12 @@ def page(lang: str, t: dict, all_langs: dict[str, dict], guides: list[dict]) -> 
 <pre><code>{e(APT)}</code></pre>
 <p><small>GPG: <code>{KEY_FINGERPRINT}</code> · Fedora, Arch, openSUSE: <a href="{REPO}#fedora-arch-opensuse-and-other-distributions">GitHub</a></small></p>
 <h2>{e(t["faq_title"])}</h2>
+<div class="faq">
 {faq}
+</div>
+<h2 id="guides" lang="en">Guides</h2>
+{guide_cards(guides)}
 <footer>
-<p lang="en">Guides: {guide_links(guides)}</p>
 <p>{e(t["footer"])}</p>
 <p><a href="{REPO}">GitHub</a> · <a href="{REPO}/releases">Releases</a> · <a href="{BASE}llms.txt">llms.txt</a> · GPL-3.0</p>
 </footer>
@@ -193,7 +223,12 @@ def guide_page(g: dict, en: dict, guides: list[dict]) -> str:
     faq = "\n".join(f"<details><summary>{e(q)}</summary><p>{inline(a)}</p></details>"
                     for q, a in g["faq"])
     if faq:
-        faq = f"<h2>{e(en['faq_title'])}</h2>\n{faq}"
+        faq = f"<h2>{e(en['faq_title'])}</h2>\n<div class=\"faq\">\n{faq}\n</div>"
+    # The guide's platform decides which button leads.
+    windows = f'<a href="{RELEASES}">{e(en["download"])}</a>'
+    linux = f'<a href="{BASE}#linux">{e(en["linux"])}</a>'
+    first, second = (linux, windows) if g.get("platform") == "linux" else (windows, linux)
+    cta = first.replace("<a ", '<a class="primary" ', 1) + "\n" + (second if g.get("platform") != "windows" else "")
     data = [{
         "@context": "https://schema.org", "@type": "TechArticle", "headline": g["h1"],
         "description": g["description"], "inLanguage": "en", "url": canonical, "image": BANNER,
@@ -223,20 +258,20 @@ def guide_page(g: dict, en: dict, guides: list[dict]) -> str:
 <style>{CSS}</style>
 </head>
 <body>
-<nav class="langs"><a href="{BASE}">MultiDrop</a> <a href="{RELEASES}">{e(en["download"])}</a> <a href="{BASE}#linux">{e(en["linux"])}</a> <a href="{REPO}">GitHub</a></nav>
+{header()}
 <main>
 <h1>{e(g["h1"])}</h1>
 <p class="lead">{inline(g["lead"])}</p>
 <div class="cta">
-<a class="primary" href="{RELEASES}">{e(en["download"])}</a>
-<a href="{BASE}#linux">{e(en["linux"])}</a>
+{cta}
 <a href="{REPO}">★ {e(en["source"])}</a>
 </div>
 {sections}
 {steps}
 {faq}
+<h2>More guides</h2>
+{guide_cards([o for o in guides if o is not g])}
 <footer>
-<p>More guides: {guide_links([o for o in guides if o is not g])}</p>
 <p>{e(en["footer"])}</p>
 <p><a href="{REPO}">GitHub</a> · <a href="{REPO}/releases">Releases</a> · <a href="{BASE}llms.txt">llms.txt</a> · GPL-3.0</p>
 </footer>
@@ -260,6 +295,7 @@ def llms_txt(en: dict, guides: list[dict]) -> str:
 - LocalSend: compatible in both directions on Windows and Linux.
 - Browser download: any phone downloads files from the PC by scanning a QR code and entering a PIN, no app needed.
 - AirPlay: screen mirroring from Windows and Linux to Apple TV, Mac and AirPlay TVs; PC audio to AirPlay speakers (HomePod, Sonos, Apple TV).
+- Tested with real devices: Quick Share with Android and Samsung Galaxy phones, AirPlay screen mirroring with Apple TVs, AirDrop between Linux and Mac.
 - Privacy: transfers are local and device to device; no server, no account, no telemetry. Incoming transfers must be accepted.
 - License: GPL-3.0-or-later. Not affiliated with Apple, Google or Samsung.
 
