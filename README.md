@@ -275,8 +275,9 @@ on every page load while their page is open, so files can be dropped on them
 from any page. Only browser-to-browser transfers work there: AirDrop, Quick
 Share, LocalSend, AirPlay and the desktop integration need the native app.
 
-Files are never stored on the page. Accepting an offer asks you for a folder,
-and the files are written straight into it as they arrive, with the sender
+Files are never stored on the page. Choose a receive folder once: files from
+paired devices are then written straight into it with no prompt. Other offers
+ask you for a folder when accepted, and the files are written as they arrive, with the sender
 held back by an acknowledged window so a slow disk never buffers the rest.
 Receiving needs Chrome, Edge or Opera (the File System Access API); other
 browsers can still send.
