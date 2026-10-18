@@ -191,7 +191,7 @@ def test_desktop_api_settings_and_welcome(tmp_path, monkeypatch):
     monkeypatch.setattr(winshell, "set_sendto", lambda on: state.update(sendto=on))
     api = win_window.DesktopApi(tmp_path / "state", tmp_path / "in")
     assert api.settings() == {"autostart": False, "sendto": False, "welcome": True,
-                              "audio": False}
+                              "audio": False, "mirror": False}
     assert api.set_autostart(True)["autostart"] and api.set_sendto(True)["sendto"]
     api.welcome_done()
     assert api.settings()["welcome"] is False

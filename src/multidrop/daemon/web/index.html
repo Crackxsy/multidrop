@@ -112,6 +112,23 @@
     <div id="jobs"></div>
   </section>
 
+  <section id="desktop-mirror" hidden>
+    <h2>Show this PC’s screen on a TV</h2>
+    <p class="hint">AirPlay screen mirroring to an Apple TV, a Mac or an AirPlay TV on your Wi-Fi.
+      The PC’s sound plays on the TV too.</p>
+    <div class="row">
+      <select id="screen" aria-label="TV"></select>
+      <button type="button" class="primary" id="mirror-start">Mirror</button>
+    </div>
+    <ul id="mirror-streams"></ul>
+    <form id="mirror-pin" class="row" hidden>
+      <label for="mirror-code" id="mirror-pin-label"></label>
+      <input id="mirror-code" autocomplete="off" required>
+      <button type="submit" class="primary">Connect</button>
+    </form>
+    <p class="meta" id="mirror-status"></p>
+  </section>
+
   <section id="desktop-audio" hidden>
     <h2>Play this PC’s sound on a speaker</h2>
     <p class="hint">AirPlay speakers and TVs on your Wi-Fi (Apple TV, HomePod, Sonos …).

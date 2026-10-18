@@ -9,6 +9,7 @@
           --line: #34343a; --accent: #5a9cff; --ok: #4cc26a; --bad: #ff6b6b; }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* also for .row and other display rules */
 body { margin: 0; background: var(--bg); color: var(--fg); }
 header { display: flex; align-items: baseline; gap: 1rem; padding: 1rem 1.5rem;
          border-bottom: 1px solid var(--line); }

@@ -1,5 +1,6 @@
 ; MultiDrop-Setup.exe: per-user install, no admin rights (Inno Setup 6).
-;   iscc /DAppVersion=0.2.0 packaging\windows\multidrop.iss   (after building dist\MultiDrop.exe)
+;   iscc /DAppVersion=0.2.0 packaging\windows\multidrop.iss   (after building dist\MultiDrop.exe
+;   and build\mirror, the screen mirroring engine: packaging\windows\make_mirror_pack.py)
 ; The "Send to" shortcut and the Run value have the same names as in
 ; src/multidrop/winshell.py, so the tray menu and the installer switch the same entries.
 
@@ -39,6 +40,8 @@ Name: desktopicon; Description: "Desktop shortcut"; Flags: unchecked
 
 [Files]
 Source: "..\..\dist\MultiDrop.exe"; DestDir: "{app}"; Flags: ignoreversion
+; AirPlay screen mirroring: doubletake and its private GStreamer (win_mirror.py).
+Source: "..\..\build\mirror\*"; DestDir: "{app}\mirror"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{userprograms}\MultiDrop"; Filename: "{app}\MultiDrop.exe"

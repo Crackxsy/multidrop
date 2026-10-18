@@ -1,7 +1,7 @@
 """MultiDrop's own window on Windows: the web UI in Edge WebView2 (pywebview),
 plus what only the desktop can do, offered to the page as
-`window.pywebview.api`: Windows integration settings, AirPlay audio and the
-one-time welcome.
+`window.pywebview.api`: Windows integration settings, AirPlay audio, AirPlay
+screen mirroring and the one-time welcome.
 
 Closing the window keeps MultiDrop running in the tray, so phones can still
 send files; "Quit" in the tray menu ends it.
@@ -24,16 +24,18 @@ TITLE = "MultiDrop"
 class DesktopApi:
     """Called from app.js; every method runs on a pywebview worker thread."""
 
-    def __init__(self, state_dir: Path, downloads: Path, audio=None):
+    def __init__(self, state_dir: Path, downloads: Path, audio=None, mirror=None):
         self._welcome_flag = state_dir / "windows-welcome-done"
         self._downloads = downloads
         self._audio = audio
+        self._mirror = mirror
 
     def settings(self) -> dict:
         return {"autostart": winshell.autostart_enabled(),
                 "sendto": winshell.sendto_enabled(),
                 "welcome": not self._welcome_flag.exists(),
-                "audio": self._audio is not None}
+                "audio": self._audio is not None,
+                "mirror": self._mirror is not None and self._mirror.available}
 
     def set_autostart(self, on: bool) -> dict:
         winshell.set_autostart(bool(on))
@@ -77,6 +79,23 @@ class DesktopApi:
     def set_volume(self, level: float) -> dict:
         self._audio.set_volume(min(max(float(level), 0.0), 1.0))
         return self.speakers()
+
+    # AirPlay screen mirroring (win_mirror.ScreenMirror) -----------------------
+
+    def screens(self) -> dict:
+        return self._mirror.snapshot()
+
+    def mirror_to(self, ip: str, port: int | None = None) -> dict:
+        self._mirror.start(str(ip), int(port) if port else None)
+        return self.screens()
+
+    def mirror_pin(self, ip: str, code: str) -> dict:
+        self._mirror.pin(str(ip), str(code).strip())
+        return self.screens()
+
+    def stop_mirror(self, ip: str | None = None) -> dict:
+        self._mirror.stop(str(ip) if ip else None)
+        return self.screens()
 
 
 class AppWindow:

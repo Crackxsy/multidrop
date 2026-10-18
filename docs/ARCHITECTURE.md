@@ -67,7 +67,13 @@ safety rules for AirDrop, Quick Share and LocalSend.
   service over 127.0.0.1 with the token (no Unix socket on Windows).
   AirPlay audio: `raop.py` speaks RAOP (AirPlay 1) itself, `win_audio.py`
   records the default output with WASAPI loopback (window or tray *Play audio
-  on*). Built into `MultiDrop.exe` with PyInstaller by GitHub Actions, and into
+  on*). Screen mirroring: `win_mirror.py` runs doubletake's Windows build
+  (`packaging/windows/doubletake/windows-support.patch`: d3d11 desktop capture,
+  Quick Sync/AMF/NVENC/Media Foundation encoders, WASAPI loopback audio) from
+  `{app}\mirror` with a private, trimmed GStreamer
+  (`packaging/windows/make_mirror_pack.py`). Python has no AF_UNIX on Windows,
+  so doubletake listens on loopback TCP and publishes address and token in an
+  owner-only control file; every request carries the token. Built into `MultiDrop.exe` with PyInstaller by GitHub Actions, and into
   the per-user installer `MultiDrop-Setup.exe` with Inno Setup
   (`packaging/windows/multidrop.iss`, checked by `test-installer.ps1`).
 - Configuration: `~/.config/multidrop/config.toml`; downloads to
@@ -109,7 +115,7 @@ License: **GPL-3.0-or-later** – code from opendrop (GPL-3) and omdrop-plugin
 | omdrop-plugin | basis of the AirDrop backend (MIT, attributed) |
 | opendrop | reference for sending via AirDrop |
 | omdrop-owl | radio backend contract `omdrop-discoverable start/stop/status/peers/probe`, used as installed |
-| doubletake | AirPlay mirroring engine, driven over its daemon socket |
+| doubletake | AirPlay mirroring engine, driven over its daemon socket; Windows build from a patch in `packaging/windows/doubletake/` |
 
 ## Privileged part (AWDL), kept separate
 
