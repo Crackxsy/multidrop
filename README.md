@@ -260,30 +260,26 @@ find it.
 
 ## Web version
 
-`pages/` is the same interface as the desktop UI, running in a browser on
-GitHub Pages (published to `web/` on the `gh-pages` branch). It has no daemon.
-Devices find each other through [AnEntrypoint/wireweave](https://github.com/AnEntrypoint/wireweave):
-nostr relays carry presence and WebRTC signalling, and the files go directly
-between the browsers.
+`pages/` is a browser edition at
+[digitaldanis.github.io/multidrop/web](https://digitaldanis.github.io/multidrop/web/):
+nothing to install, browser to browser only. AirDrop, Quick Share, LocalSend,
+AirPlay and the desktop integration need the app.
 
-The page is AirDrop-like: you sit in the middle and your paired devices are
-around you, online or offline (an offline one shows when it was last seen).
-Pair once: show a 6-digit code on one device and enter it on the other, or
-scan the QR code shown there. The host approves the other device, and both
-keep a shared zone secret in local storage. Paired devices rejoin the zone
-on every page load while their page is open, so files can be dropped on them
-from any page. Only browser-to-browser transfers work there: AirDrop, Quick
-Share, LocalSend, AirPlay and the desktop integration need the native app.
+Open the page on two devices on the same Wi-Fi and they see each other – no
+code, and the receiver accepts every transfer. Only devices that reach each
+other directly on the local network are shown. To reach your own devices on
+other networks, *Remember a device* pairs them once with a 6-digit code or QR
+code.
 
-Files are never stored on the page. Choose a receive folder once: files from
-paired devices are then written straight into it with no prompt. Other offers
-ask you for a folder when accepted, and the files are written as they arrive, with the sender
-held back by an acknowledged window so a slow disk never buffers the rest.
-Receiving needs Chrome, Edge or Opera (the File System Access API); other
-browsers can still send.
+Devices find each other through public nostr relays
+([wireweave](https://github.com/AnEntrypoint/wireweave)); the relays see a
+neutral name, real device names and files go directly between the browsers
+over WebRTC. If a remembered device can't be reached directly, the page asks
+before sending through the relays (encrypted). Receiving needs Chrome, Edge or
+Opera, which write straight into a folder you choose.
 
-Clone with submodules to work on it: `git clone --recurse-submodules …`, or
-`git submodule update --init` in an existing checkout.
+Work on it with `git clone --recurse-submodules …` or
+`git submodule update --init`.
 
 ## Development
 
