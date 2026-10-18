@@ -143,7 +143,9 @@ def verify(dest: Path, elements: list[str]) -> None:
         broken = [e for e in elements if inspect(dest / "bin", e, env) is None]
         if broken:
             sys.exit(f"the trimmed GStreamer cannot load {', '.join(broken)}")
-        pipeline = ["--quiet", "videotestsrc", "num-buffers=5", "!", "video/x-raw,width=320,height=240",
+        # Live like doubletake's sources: rtponviftimestamp needs a running clock.
+        pipeline = ["--quiet", "videotestsrc", "is-live=true", "num-buffers=5",
+                    "!", "video/x-raw,width=320,height=240",
                     "!", "videoconvert", "!", "x264enc", "!", "h264parse", "!", "rtph264pay",
                     "!", "rtponviftimestamp", "ntp-offset=-1", "!", "rtpstreampay", "!", "fakesink"]
         r = subprocess.run([str(dest / "bin" / "gst-launch-1.0.exe"), *pipeline],
