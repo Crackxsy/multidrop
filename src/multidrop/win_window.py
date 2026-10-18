@@ -24,11 +24,13 @@ TITLE = "MultiDrop"
 class DesktopApi:
     """Called from app.js; every method runs on a pywebview worker thread."""
 
-    def __init__(self, state_dir: Path, downloads: Path, audio=None, mirror=None):
+    def __init__(self, state_dir: Path, downloads: Path, audio=None, mirror=None,
+                 network=None):
         self._welcome_flag = state_dir / "windows-welcome-done"
         self._downloads = downloads
         self._audio = audio
         self._mirror = mirror
+        self._network = network
 
     def settings(self) -> dict:
         return {"autostart": winshell.autostart_enabled(),
@@ -48,6 +50,12 @@ class DesktopApi:
     def open_downloads(self) -> None:
         self._downloads.mkdir(parents=True, exist_ok=True)
         os.startfile(self._downloads)       # noqa: S606 (our own folder)
+
+    def network(self) -> dict:
+        return self._network.status() if self._network else {"ok": True}
+
+    def allow_network(self) -> dict:
+        return self._network.request()
 
     def welcome_done(self) -> None:
         self._welcome_flag.parent.mkdir(parents=True, exist_ok=True)
@@ -115,9 +123,13 @@ class AppWindow:
         if self.quitting:
             return True
         self.window.hide()                  # keep receiving in the background
+        log.info("window closed: hidden, MultiDrop keeps running")
         if not self._hidden_once:
             self._hidden_once = True
-            self._on_first_hide()
+            try:
+                self._on_first_hide()
+            except Exception as e:          # a failed hint must not end the app
+                log.warning("hint after closing: %s", e)
         return False
 
     def show(self) -> None:

@@ -296,7 +296,7 @@ async def share_stop(request: web.Request) -> web.Response:
 
 async def share_start(request: web.Request) -> web.Response:
     """Like /api/send, without target; options: pin ("" = random, PIN),
-    no_pin (true), minutes."""
+    no_pin (true), minutes, https (true)."""
     d = request.app[DAEMON]
     try:
         if request.content_type.startswith("multipart/"):
@@ -335,7 +335,9 @@ def _share_options(opts: dict) -> dict:
             ipaddress.ip_address(address)
         except ValueError:
             raise ValueError("address: an IP address") from None
-    return {"pin": None if no_pin else pin, "minutes": minutes, "address": address}
+    https = opts.get("https") in (True, "1", "true")
+    return {"pin": None if no_pin else pin, "minutes": minutes, "address": address,
+            "https": https}
 
 
 async def selection_get(request: web.Request) -> web.Response:

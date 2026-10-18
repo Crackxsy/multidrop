@@ -263,6 +263,7 @@ async function startShare(files) {
   const form = new FormData();
   form.append("minutes", $("#share-minutes").value);
   if ($("#share-nopin").checked) form.append("no_pin", "1");
+  if ($("#share-https").checked) form.append("https", "1");
   for (const f of files) {
     form.append("path", f.path);
     form.append("file", f.file, f.file.name);
@@ -278,7 +279,8 @@ async function shareSelection() {
   try {
     showShare(await api("/api/share", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ paths: selection, minutes: +$("#share-minutes").value,
-                             no_pin: $("#share-nopin").checked }) }));
+                             no_pin: $("#share-nopin").checked,
+                             https: $("#share-https").checked }) }));
     await clearSelection();
   } catch (e) {
     addLog(`Sharing failed: ${e.message}`);
@@ -309,6 +311,9 @@ function showShare(s) {
   $("#share-url").href = s.url;
   $("#share-pin-row").hidden = !s.pin;
   $("#share-pin").textContent = s.pin || "";
+  $("#share-tls-hint").hidden = !s.url.startsWith("https:");
+  // iPhone hotspots always use 172.20.10.0/28; the hotspot iPhone cannot reach its clients.
+  $("#share-hotspot").hidden = !/^https?:\/\/172\.20\.10\./.test(s.url);
   const until = new Date(s.expires * 1000).toLocaleTimeString();
   $("#share-info").textContent =
     `${s.files.length} file(s), ${human(s.size)} · until ${until} · ${s.downloads} download(s)`;
@@ -401,6 +406,7 @@ const LOG_TEXT = {
   share_download: (e) => `${e.from} is downloading ${e.file}`,
   share_wrong_pin: (e) => `wrong PIN from ${e.from}`,
   share_stopped: (e) => `browser download ended (${e.reason}, ${e.downloads} download(s))`,
+  share_moved: (e) => `browser download moved to the new network: ${e.url}`,
 };
 
 function addLog(text, time, old) {
@@ -422,7 +428,7 @@ function connect() {
     else if (ev.event === "job_started") onJobEvent(ev);
     if (ev.event.startsWith("offer")) loadOffers().catch(() => {});
     if (ev.event === "selection") loadSelection().catch(() => {});
-    if (ev.event === "share_download" || ev.event === "share_stopped") {
+    if (["share_download", "share_stopped", "share_moved"].includes(ev.event)) {
       api("/api/share").then(showShare).catch(() => {});
     }
     const text = LOG_TEXT[ev.event];
@@ -436,6 +442,27 @@ function connect() {
 }
 
 // -- app window on Windows: window.pywebview.api (win_window.DesktopApi) -------
+
+function showNetwork(n) {
+  $("#network").hidden = n.ok;
+}
+
+async function initNetwork(d) {
+  const refresh = () => d.network().then(showNetwork).catch(() => {});
+  $("#network-allow").onclick = async () => {
+    $("#network-status").textContent = "Waiting for Windows …";
+    try {
+      const n = await d.allow_network();
+      showNetwork(n);
+      $("#network-status").textContent = n.ok ? "" : "That did not work – Windows said no.";
+    } catch (e) {
+      $("#network-status").textContent = String(e.message || e);
+    }
+  };
+  await refresh();
+  // Another Wi-Fi, or the first-start prompt answered (each check runs PowerShell).
+  setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+}
 
 const desktop = () => window.pywebview && window.pywebview.api;
 
@@ -453,6 +480,7 @@ async function initDesktop() {
     });
   }
   $("#open-downloads").onclick = () => d.open_downloads();
+  initNetwork(d);
   $("#desktop-settings").hidden = false;
   if (s.mirror) initMirror(d);
   if (!s.audio) return;

@@ -1,6 +1,7 @@
 """Windows code paths (most of them also run on Linux)."""
 
 import socket
+import subprocess
 import sys
 
 import pytest
@@ -226,3 +227,50 @@ def test_desktop_api_speakers(tmp_path):
     assert api.stop_audio()["current"] is None
     with pytest.raises(ValueError, match="search again"):
         api.play_on("Gone")
+
+
+def test_firewall_rule_any_network_local_devices_only():
+    from multidrop import winshell
+    *deletes, tcp, udp = winshell.firewall_commands([53320, 53317, 53317], [5353])
+    assert [d[-1] for d in deletes] == ["name=MultiDrop (local network)", "name=MultiDrop"]
+    for rule in (tcp, udp):
+        # Most Wi-Fis count as "public" on Windows; the subnet keeps the internet out.
+        assert "profile=any" in rule and "remoteip=localsubnet" in rule and "dir=in" in rule
+    assert "protocol=TCP" in tcp and "localport=53317,53320" in tcp
+    assert "protocol=UDP" in udp and "localport=5353" in udp
+
+
+def test_allow_network_ignores_missing_old_rules(monkeypatch):
+    from multidrop import winshell
+    ran = []
+
+    def run(args):
+        ran.append(args)
+        return subprocess.CompletedProcess(args, 1 if args[3] == "delete" else 0, "", "")
+    monkeypatch.setattr(winshell, "_run", run)
+    assert winshell.allow_network([53317], [5353]) == 0
+    assert [a[3] for a in ran] == ["delete", "delete", "add", "add"]
+    monkeypatch.setattr(winshell, "_run", lambda args: subprocess.CompletedProcess(args, 1))
+    assert winshell.allow_network([53317], [5353]) == 1
+
+
+def test_elevated_start_allows_configured_ports(monkeypatch, tmp_path):
+    from multidrop import windows, winshell
+    calls = []
+    monkeypatch.setattr(winshell, "allow_network", lambda *a: calls.append(a) or 0)
+    cfg = tmp_path / "c.toml"
+    cfg.write_text("[localsend]\nport = 40001\nshare_port = 40002\n[quickshare]\nport = 40003\n")
+    assert windows.main(["--allow-network", "--config", str(cfg)]) == 0
+    assert calls == [([40001, 40003, 40002], [53317, 5353])]
+
+
+def test_network_access_asks_only_once(monkeypatch, make_config):
+    from multidrop import windows, winshell
+    requests = []
+    monkeypatch.setattr(winshell, "firewall_rule_present", lambda: False)
+    monkeypatch.setattr(winshell, "request_network_access",
+                        lambda args: requests.append(args) or False)
+    access = windows.NetworkAccess(make_config("winpc"), ["--config", "x.toml"])
+    access.ask_once()
+    access.ask_once()
+    assert requests == [["--config", "x.toml"]]
