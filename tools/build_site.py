@@ -1,7 +1,8 @@
 """Build the website (GitHub Pages) from site/strings.toml.
 
     python3 tools/build_site.py [OUT]     write OUT (default build/site): index.html in
-                                          English, one folder per language, llms.txt,
+                                          English, one folder per language, one per
+                                          guide (site/guides.toml), llms.txt,
                                           robots.txt, sitemap.xml, 404.html
     python3 tools/build_site.py --readme  refresh "MultiDrop in your language" in README.md
 
@@ -59,13 +60,55 @@ def load() -> dict[str, dict]:
     return tomllib.loads((ROOT / "site" / "strings.toml").read_text(encoding="utf-8"))
 
 
+def load_guides() -> list[dict]:
+    return tomllib.loads((ROOT / "site" / "guides.toml").read_text(encoding="utf-8"))["guide"]
+
+
 def url(lang: str) -> str:
     return BASE if lang == "en" else f"{BASE}{lang}/"
 
 
 def inline(text: str) -> str:
-    """**bold** in the strings, everything else escaped."""
-    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html.escape(text))
+    """**bold** and [links](https://…) in the strings, everything else escaped."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html.escape(text))
+    return re.sub(r"\[(.+?)\]\((https://[^)\s]+)\)", r'<a href="\2">\1</a>', text)
+
+
+def plain(text: str) -> str:
+    """The strings without **bold** and link markup, for meta data."""
+    return re.sub(r"\[(.+?)\]\(https://[^)\s]+\)", r"\1", text.replace("**", ""))
+
+
+def meta(lang: str, title: str, description: str, canonical: str) -> str:
+    e = html.escape
+    return f"""<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{e(title)}</title>
+<meta name="description" content="{e(description)}">
+<link rel="canonical" href="{canonical}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MultiDrop">
+<meta property="og:title" content="{e(title)}">
+<meta property="og:description" content="{e(description)}">
+<meta property="og:url" content="{canonical}">
+<meta property="og:image" content="{BANNER}">
+<meta property="og:locale" content="{lang}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{e(title)}">
+<meta name="twitter:description" content="{e(description)}">
+<meta name="twitter:image" content="{BANNER}">
+<meta name="theme-color" content="#1f6feb">
+<link rel="icon" href="https://raw.githubusercontent.com/digitaldanis/multidrop/main/data/icons/multidrop.svg" type="image/svg+xml">"""
+
+
+def guide_links(guides: list[dict]) -> str:
+    return " · ".join(f'<a href="{BASE}{g["slug"]}/">{html.escape(g["h1"])}</a>' for g in guides)
+
+
+def ld(*items: dict) -> str:
+    return "\n".join('<script type="application/ld+json">'
+                     + json.dumps(d, ensure_ascii=False).replace("</", "<\\/") + "</script>"
+                     for d in items)
 
 
 def json_ld(lang: str, t: dict) -> str:
@@ -78,7 +121,7 @@ def json_ld(lang: str, t: dict) -> str:
         "description": t["description"], "inLanguage": lang, "url": url(lang),
         "downloadUrl": RELEASES, "codeRepository": REPO, "image": BANNER,
         "license": "https://www.gnu.org/licenses/gpl-3.0.html", "isAccessibleForFree": True,
-        "featureList": [re.sub(r"\*\*", "", f) for f in t["features"]],
+        "featureList": [plain(f) for f in t["features"]],
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
     }
     faq = {
@@ -86,12 +129,10 @@ def json_ld(lang: str, t: dict) -> str:
         "mainEntity": [{"@type": "Question", "name": q,
                         "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in t["faq"]],
     }
-    dump = lambda d: json.dumps(d, ensure_ascii=False).replace("</", "<\\/")  # noqa: E731
-    return (f'<script type="application/ld+json">{dump(app)}</script>\n'
-            f'<script type="application/ld+json">{dump(faq)}</script>')
+    return ld(app, faq)
 
 
-def page(lang: str, t: dict, all_langs: dict[str, dict]) -> str:
+def page(lang: str, t: dict, all_langs: dict[str, dict], guides: list[dict]) -> str:
     e = html.escape
     alternates = "\n".join(f'<link rel="alternate" hreflang="{code}" href="{url(code)}">'
                            for code in all_langs) + f'\n<link rel="alternate" hreflang="x-default" href="{BASE}">'
@@ -105,25 +146,8 @@ def page(lang: str, t: dict, all_langs: dict[str, dict]) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{direction}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{e(t["title"])}</title>
-<meta name="description" content="{e(t["description"])}">
-<link rel="canonical" href="{url(lang)}">
+{meta(lang, t["title"], t["description"], url(lang))}
 {alternates}
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="MultiDrop">
-<meta property="og:title" content="{e(t["title"])}">
-<meta property="og:description" content="{e(t["description"])}">
-<meta property="og:url" content="{url(lang)}">
-<meta property="og:image" content="{BANNER}">
-<meta property="og:locale" content="{lang}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{e(t["title"])}">
-<meta name="twitter:description" content="{e(t["description"])}">
-<meta name="twitter:image" content="{BANNER}">
-<meta name="theme-color" content="#1f6feb">
-<link rel="icon" href="https://raw.githubusercontent.com/digitaldanis/multidrop/main/data/icons/multidrop.svg" type="image/svg+xml">
 {json_ld(lang, t)}
 <style>{CSS}</style>
 </head>
@@ -148,6 +172,7 @@ def page(lang: str, t: dict, all_langs: dict[str, dict]) -> str:
 <h2>{e(t["faq_title"])}</h2>
 {faq}
 <footer>
+<p lang="en">Guides: {guide_links(guides)}</p>
 <p>{e(t["footer"])}</p>
 <p><a href="{REPO}">GitHub</a> · <a href="{REPO}/releases">Releases</a> · <a href="{BASE}llms.txt">llms.txt</a> · GPL-3.0</p>
 </footer>
@@ -157,7 +182,71 @@ def page(lang: str, t: dict, all_langs: dict[str, dict]) -> str:
 """
 
 
-def llms_txt(en: dict) -> str:
+def guide_page(g: dict, en: dict, guides: list[dict]) -> str:
+    e = html.escape
+    canonical = f"{BASE}{g['slug']}/"
+    sections = "\n".join(f"<h2>{e(h)}</h2>\n<p>{inline(text)}</p>" for h, text in g["sections"])
+    steps = ""
+    if g.get("steps"):
+        items = "\n".join(f"<li>{inline(s)}</li>" for s in g["steps"])
+        steps = f"<h2>How to set it up</h2>\n<ol>\n{items}\n</ol>"
+    faq = "\n".join(f"<details><summary>{e(q)}</summary><p>{inline(a)}</p></details>"
+                    for q, a in g["faq"])
+    if faq:
+        faq = f"<h2>{e(en['faq_title'])}</h2>\n{faq}"
+    data = [{
+        "@context": "https://schema.org", "@type": "TechArticle", "headline": g["h1"],
+        "description": g["description"], "inLanguage": "en", "url": canonical, "image": BANNER,
+        "author": {"@type": "Organization", "name": "MultiDrop", "url": REPO},
+        "about": {"@type": "SoftwareApplication", "name": "MultiDrop", "url": BASE,
+                  "applicationCategory": "UtilitiesApplication",
+                  "operatingSystem": "Windows 10, Windows 11, Linux",
+                  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}},
+    }, {
+        "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "MultiDrop", "item": BASE},
+            {"@type": "ListItem", "position": 2, "name": g["h1"], "item": canonical}],
+    }]
+    if g.get("steps"):
+        data.append({"@context": "https://schema.org", "@type": "HowTo", "name": g["h1"],
+                     "step": [{"@type": "HowToStep", "position": i, "text": plain(s)}
+                              for i, s in enumerate(g["steps"], 1)]})
+    if g["faq"]:
+        data.append({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+            {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": plain(a)}}
+            for q, a in g["faq"]]})
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+{meta("en", g["title"], g["description"], canonical)}
+{ld(*data)}
+<style>{CSS}</style>
+</head>
+<body>
+<nav class="langs"><a href="{BASE}">MultiDrop</a> <a href="{RELEASES}">{e(en["download"])}</a> <a href="{BASE}#linux">{e(en["linux"])}</a> <a href="{REPO}">GitHub</a></nav>
+<main>
+<h1>{e(g["h1"])}</h1>
+<p class="lead">{inline(g["lead"])}</p>
+<div class="cta">
+<a class="primary" href="{RELEASES}">{e(en["download"])}</a>
+<a href="{BASE}#linux">{e(en["linux"])}</a>
+<a href="{REPO}">★ {e(en["source"])}</a>
+</div>
+{sections}
+{steps}
+{faq}
+<footer>
+<p>More guides: {guide_links([o for o in guides if o is not g])}</p>
+<p>{e(en["footer"])}</p>
+<p><a href="{REPO}">GitHub</a> · <a href="{REPO}/releases">Releases</a> · <a href="{BASE}llms.txt">llms.txt</a> · GPL-3.0</p>
+</footer>
+</main>
+</body>
+</html>
+"""
+
+
+def llms_txt(en: dict, guides: list[dict]) -> str:
     faq = "\n".join(f"- **{q}** {a}" for q, a in en["faq"])
     return f"""# MultiDrop
 
@@ -187,6 +276,10 @@ def llms_txt(en: dict) -> str:
 
 {faq}
 
+## Guides
+
+{chr(10).join(f"- [{g['h1']}]({BASE}{g['slug']}/): {g['description']}" for g in guides)}
+
 ## Links
 
 - [Download (Windows installer, portable .exe, .deb)]({RELEASES})
@@ -197,23 +290,27 @@ def llms_txt(en: dict) -> str:
 
 
 def build(out: Path) -> None:
-    strings = load()
+    strings, guides = load(), load_guides()
     out.mkdir(parents=True, exist_ok=True)
     for lang, t in strings.items():
         target = out / "index.html" if lang == "en" else out / lang / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(page(lang, t, strings), encoding="utf-8")
-    (out / "404.html").write_text(page("en", strings["en"], strings), encoding="utf-8")
-    (out / "llms.txt").write_text(llms_txt(strings["en"]), encoding="utf-8")
+        target.write_text(page(lang, t, strings, guides), encoding="utf-8")
+    for g in guides:
+        (out / g["slug"]).mkdir(parents=True, exist_ok=True)
+        (out / g["slug"] / "index.html").write_text(guide_page(g, strings["en"], guides), encoding="utf-8")
+    (out / "404.html").write_text(page("en", strings["en"], strings, guides), encoding="utf-8")
+    (out / "llms.txt").write_text(llms_txt(strings["en"], guides), encoding="utf-8")
     (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {BASE}sitemap.xml\n")
     links = "".join(f'<xhtml:link rel="alternate" hreflang="{c}" href="{url(c)}"/>' for c in strings)
     entries = "".join(f"<url><loc>{url(c)}</loc>{links}</url>" for c in strings)
+    entries += "".join(f"<url><loc>{BASE}{g['slug']}/</loc></url>" for g in guides)
     (out / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
         f'xmlns:xhtml="http://www.w3.org/1999/xhtml">{entries}</urlset>\n')
     (out / ".nojekyll").write_text("")
-    print(f"{len(strings)} languages in {out}")
+    print(f"{len(strings)} languages and {len(guides)} guides in {out}")
 
 
 def readme() -> None:
