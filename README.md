@@ -258,6 +258,15 @@ real hardware. [Device reports](../../issues/new/choose) are very welcome –
 ⭐ **If MultiDrop saved you a cable, star the repo** – it helps other people
 find it.
 
+## Portable web edition
+
+One file per platform, nothing to install: run it and MultiDrop opens in your
+browser. Latest builds (rebuilt on every push, always one click away):
+[nightly](https://github.com/lanmower/multidrop/releases/tag/nightly) –
+`multidrop-web-linux-x64`, `-linux-arm64`, `-macos-x64`, `-macos-arm64`,
+`-windows-x64.exe`, `-windows-arm64.exe`. The app is the same one GitHub Pages
+serves (`pages/`); the binary only embeds it and serves it on 127.0.0.1.
+
 ## Web version
 
 `pages/` is the same interface as the desktop UI, running in a browser on

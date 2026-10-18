@@ -1,0 +1,17 @@
+[package]
+name = "multidrop-web"
+version = "0.1.0"
+edition = "2021"
+description = "MultiDrop: the browser app, as one portable file. Serves it on 127.0.0.1 and opens it."
+license = "GPL-3.0-or-later"
+publish = false
+
+# No dependencies: the binary is the standard library plus the app's own files.
+[dependencies]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
