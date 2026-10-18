@@ -162,7 +162,7 @@ jobs:
   web:
     # Browser build (pages/) published to web/ on gh-pages, beside the APT repo at its root.
     # Only the page files and wireweave's src/ are copied, not the submodule's repo metadata.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-24.04
     concurrency:
       group: gh-pages
