@@ -270,6 +270,29 @@ works" helps a lot.
 ⭐ **If MultiDrop saved you a cable, star the repo** – it helps other people
 find it.
 
+## Web version
+
+`pages/` is a browser edition at
+[digitaldanis.github.io/multidrop/web](https://digitaldanis.github.io/multidrop/web/):
+nothing to install, browser to browser only. AirDrop, Quick Share, LocalSend,
+AirPlay and the desktop integration need the app.
+
+Open the page on two devices on the same Wi-Fi and they see each other – no
+code, and the receiver accepts every transfer. Only devices that reach each
+other directly on the local network are shown. To reach your own devices on
+other networks, *Remember a device* pairs them once with a 6-digit code or QR
+code.
+
+Devices find each other through public nostr relays
+([wireweave](https://github.com/AnEntrypoint/wireweave)); the relays see a
+neutral name, real device names and files go directly between the browsers
+over WebRTC. If a remembered device can't be reached directly, the page asks
+before sending through the relays (encrypted). Receiving needs Chrome, Edge or
+Opera, which write straight into a folder you choose.
+
+Work on it with `git clone --recurse-submodules …` or
+`git submodule update --init`.
+
 ## Development
 
 ```bash

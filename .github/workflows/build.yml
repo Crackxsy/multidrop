@@ -225,6 +225,32 @@ jobs:
           git add -A
           git diff --cached --quiet || { git commit -m "Website: ${GITHUB_SHA::7}" && git push; }
 
+  web:
+    # Browser edition (pages/) on GitHub Pages under web/, next to the website and
+    # the APT repository. Only the page files and wireweave's src/ are copied.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [pages]
+    runs-on: ubuntu-latest
+    concurrency: gh-pages
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: gh-pages
+      - name: Publish
+        run: |
+          rm -rf gh-pages/web && mkdir -p gh-pages/web/vendor/wireweave
+          cp pages/index.html pages/app.js pages/wire.js pages/style.css gh-pages/web/
+          cp -r pages/vendor/wireweave/src gh-pages/web/vendor/wireweave/
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || { git commit -m "Web edition: ${GITHUB_SHA::7}" && git push; }
+
   apt-repo:
     # Signed APT repository on GitHub Pages (gh-pages branch):
     #   sudo apt install multidrop   after adding it once, see README.

@@ -43,6 +43,20 @@ The `.proto` files in `src/multidrop/backends/quickshare/proto/` were collected 
 (<https://www.apache.org/licenses/LICENSE-2.0>). The generated `pb/*_pb2.py`
 files are derived from them.
 
+### wireweave (MIT) – web edition transport
+
+The web edition in `pages/` loads [wireweave](https://github.com/AnEntrypoint/wireweave)
+from the `pages/vendor/wireweave` submodule (pinned to a commit) for nostr
+presence, WebRTC signalling and encrypted relay messages. It also loads
+nostr-tools (MIT), xstate (MIT) and qrcode-generator (MIT) from esm.sh at
+pinned versions.
+
+```
+MIT License
+
+Copyright (c) 2026 AnEntrypoint
+```
+
 ## Used as reference only (no code copied)
 
 [OpenDrop](https://github.com/seemoo-lab/opendrop) (GPL-3.0),
