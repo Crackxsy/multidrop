@@ -17,7 +17,6 @@ jobs:
     # built from site/strings.toml by tools/build_site.py. The branch is
     # checked out to gh-pages/, as site/ holds the sources.
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.WEB_AT_ROOT != 'true'
-    needs: [test-linux]
     runs-on: ubuntu-latest
     concurrency: gh-pages
     steps:
