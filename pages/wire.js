@@ -581,7 +581,10 @@ export function createWire({ alias, onEvent }) {
         if (session.peers.get(pk).dc?.readyState === "open") { staleSince.delete(pk); continue; }
         const since = staleSince.get(pk) ?? now;
         staleSince.set(pk, since);
-        if (now - since > STALE_MS) { staleSince.delete(pk); session._closePeer(pk); }
+        if (now - since > STALE_MS && typeof session._closePeer === "function") {
+          staleSince.delete(pk);
+          session._closePeer(pk);
+        }
       }
     }, 10000);
   }
