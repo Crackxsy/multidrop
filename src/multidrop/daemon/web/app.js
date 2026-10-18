@@ -454,6 +454,7 @@ async function initDesktop() {
   }
   $("#open-downloads").onclick = () => d.open_downloads();
   $("#desktop-settings").hidden = false;
+  if (s.mirror) initMirror(d);
   if (!s.audio) return;
   $("#desktop-audio").hidden = false;
   const run = (p) => p.then(showSpeakers).catch((e) => {
@@ -486,6 +487,60 @@ function showSpeakers(sp) {
   $("#speaker-play").disabled = !sp.list.some((r) => r.supported);
   $("#speaker-status").textContent = sp.current ? `Playing on ${sp.current}`
     : sp.list.length ? "" : "No speakers found. They must be on the same Wi-Fi.";
+}
+
+const STREAM_STATE = { streaming: "mirroring", connecting: "connecting …",
+                       pin_required: "waiting for the code" };
+let pinFor = null;                // IP of the TV whose code or password is asked for
+
+function initMirror(d) {
+  $("#desktop-mirror").hidden = false;
+  const run = (p) => p.then(showScreens).catch((e) => {
+    $("#mirror-status").textContent = String(e.message || e);
+  });
+  $("#mirror-start").onclick = () => {
+    const opt = $("#screen").selectedOptions[0];
+    if (!opt) return;
+    $("#mirror-status").textContent = "Connecting …";
+    run(d.mirror_to(opt.value, +opt.dataset.port || null));
+  };
+  $("#mirror-pin").onsubmit = (ev) => {
+    ev.preventDefault();
+    const code = $("#mirror-code").value;
+    $("#mirror-code").value = "";
+    run(d.mirror_pin(pinFor, code));
+  };
+  const poll = () => {
+    if (document.visibilityState === "visible") run(d.screens());
+  };
+  poll();
+  setInterval(poll, 2000);
+}
+
+function showScreens(m) {
+  const sel = $("#screen");
+  const chosen = sel.value;
+  sel.replaceChildren(...m.screens.map((s) => el("option", { value: s.ip, "data-port": s.port || "" },
+    s.model ? `${s.name} (${s.model})` : s.name)));
+  if (chosen) sel.value = chosen;
+  $("#mirror-start").disabled = !m.screens.length;
+  $("#mirror-streams").replaceChildren(...m.streams.map((s) => el("li", {},
+    `${s.device}: ${STREAM_STATE[s.state] || s.state} `,
+    el("button", { type: "button", class: "danger", onclick: () => {
+      window.pywebview.api.stop_mirror(s.ip).then(showScreens).catch(() => {});
+    } }, "Stop"))));
+  const waiting = m.streams.find((s) => s.state === "pin_required");
+  pinFor = waiting ? waiting.ip : null;
+  $("#mirror-pin").hidden = !waiting;
+  if (waiting) {
+    const password = waiting.credential === "password";
+    $("#mirror-pin-label").textContent = password
+      ? `Password of ${waiting.device}` : `Code shown on ${waiting.device}`;
+    $("#mirror-code").type = password ? "password" : "text";
+    $("#mirror-code").inputMode = password ? "text" : "numeric";
+  }
+  $("#mirror-status").textContent = m.error
+    || (m.screens.length ? "" : "Looking for Apple TVs and AirPlay TVs on your Wi-Fi …");
 }
 
 function init() {

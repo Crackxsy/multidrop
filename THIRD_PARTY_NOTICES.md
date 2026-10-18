@@ -68,6 +68,18 @@ Pillow (MIT-CMU), PyInstaller bootloader (GPL-2.0 with bootloader exception).
 Their license texts are available from the respective projects; the complete
 source of MultiDrop is in this repository.
 
+## Bundled in MultiDrop-Setup.exe for screen mirroring (`{app}\mirror`)
+
+- [doubletake](https://github.com/omarroth/doubletake) (LGPL-3.0-or-later),
+  built from release v0.5.0 with MultiDrop's
+  `packaging/windows/doubletake/windows-support.patch`; its license files are
+  installed next to it. It runs as its own process.
+- [GStreamer](https://gstreamer.freedesktop.org/) 1.28 runtime, a subset of the
+  official MSVC build: GStreamer and its plugins (LGPL-2.1-or-later), GLib
+  (LGPL-2.1-or-later), x264 (GPL-2.0-or-later), OpenH264 (BSD-2-Clause) and the
+  libraries they link. Sources: <https://gstreamer.freedesktop.org/src/> and
+  the [cerbero](https://gitlab.freedesktop.org/gstreamer/cerbero) build recipes.
+
 ## Bundled in the .deb package
 
 Pure-Python copies in `/usr/lib/multidrop/vendor`: protobuf (BSD-3-Clause),

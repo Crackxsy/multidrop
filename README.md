@@ -40,12 +40,13 @@ up in the share menu of every phone in the room.
 | **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, PCs with LocalSend |
 | **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app at all |
 | **AirDrop** – send & receive | ✅¹ | – | iPhone, iPad, Mac |
-| **AirPlay** – mirror your screen | ✅ | – | Apple TV, Mac, AirPlay TVs |
+| **AirPlay** – mirror your screen | ✅ | ✅³ | Apple TV, Mac, AirPlay TVs |
 | **AirPlay** – play audio | ✅ | ✅² | Apple TV, HomePod, Sonos, Mac |
 
 <sub>¹ needs a supported Wi-Fi card, see [AirDrop on Linux](#airdrop-on-linux).
 ² receivers that accept unencrypted or RSA AirPlay 1 streams without a password;
-others are listed as not supported.</sub>
+others are listed as not supported.
+³ with MultiDrop-Setup.exe; the portable MultiDrop.exe has no mirroring.</sub>
 
 ## Download
 
@@ -101,8 +102,10 @@ and pick them.
 - **Windows** – MultiDrop opens in its own window and explains on first start
   how phones send to it. Closing the window keeps it receiving in the
   notification area. Turn on *Send to* in *Settings*, then right-click files in
-  Explorer → *Send to* → *MultiDrop*. *Play this PC's sound on a speaker* sends
-  your audio to an AirPlay speaker.
+  Explorer → *Send to* → *MultiDrop*. *Show this PC's screen on a TV* mirrors
+  the screen to an Apple TV or AirPlay TV (enter the code the TV shows the
+  first time); *Play this PC's sound on a speaker* sends your audio to an
+  AirPlay speaker.
 - **Linux** – the top bar menu lists nearby devices and has AirDrop on/off,
   *Mirror screen* and *Play audio on*. In the file manager, right-click →
   *Send with MultiDrop*. On GNOME the top bar icon needs the *AppIndicator and
@@ -189,7 +192,8 @@ shairport-sync.
 
 **Not verified on real devices yet:** Quick Share with Android/Samsung phones,
 AirPlay mirroring and audio (no real Apple TV, HomePod or Sonos yet), Windows
-on real hardware. [Device reports](../../issues/new/choose) are very welcome.
+on real hardware. Windows screen mirroring is tested in CI against doubletake's
+test receiver with synthetic video only. [Device reports](../../issues/new/choose) are very welcome.
 
 ## Development
 

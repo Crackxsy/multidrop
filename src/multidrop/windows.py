@@ -1,9 +1,10 @@
 """MultiDrop for Windows: background service, tray icon, UI in the browser.
 
 Quick Share and LocalSend work as on Linux; the tray menu plays the PC's
-audio on AirPlay speakers (win_audio.py). AirDrop needs Apple's AWDL radio
-link, which Windows Wi-Fi drivers cannot provide, and AirPlay mirroring uses
-Linux screen capture, so neither is part of the Windows build.
+audio on AirPlay speakers (win_audio.py) and the window mirrors the screen to
+an Apple TV (win_mirror.py, doubletake's Windows build). AirDrop needs Apple's
+AWDL radio link, which Windows Wi-Fi drivers cannot provide, so it is not part
+of the Windows build.
 
 Built into MultiDrop.exe by GitHub Actions (.github/workflows/build.yml).
 `MultiDrop.exe FILE...` (Explorer's "Send to") hands the files to the running
@@ -296,10 +297,13 @@ def main(argv: list[str] | None = None) -> int:
                                              checked=lambda item: winshell.sendto_enabled()),
                             pystray.Menu.SEPARATOR,
                             pystray.MenuItem("Quit", quit_app)))
+    from multidrop.win_mirror import ScreenMirror
+    mirror = ScreenMirror(cfg.state_dir, log_dir,
+                          airplay_caps=lambda: service.api("/api/airplay?timeout=8"))
     if use_window:
         from multidrop.win_window import AppWindow, DesktopApi
         window = AppWindow(
-            url, DesktopApi(cfg.state_dir, cfg.download_dir, audio), log_dir / "webview",
+            url, DesktopApi(cfg.state_dir, cfg.download_dir, audio, mirror), log_dir / "webview",
             hidden=args.no_browser and not paths,
             on_first_hide=lambda: icon.notify(
                 f"{APP_NAME} keeps running here, so phones can still send you files. "
@@ -321,6 +325,7 @@ def main(argv: list[str] | None = None) -> int:
             quitting.wait()
     if audio is not None:
         audio.stop()
+    mirror.shutdown()
     service.stop()
     _exit(0)
 
