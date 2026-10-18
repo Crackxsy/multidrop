@@ -158,3 +158,33 @@ jobs:
           git add -A
           git commit -m "APT repository: ${GITHUB_REF_NAME}"
           git push
+
+  web:
+    # Browser build (pages/) published to web/ on gh-pages, beside the APT repo at its root.
+    # Only the page files and wireweave's src/ are copied, not the submodule's repo metadata.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - name: Copy the web build into web/
+        run: |
+          rm -rf site/web && mkdir -p site/web/vendor/wireweave
+          cp pages/index.html pages/app.js pages/wire.js pages/style.css site/web/
+          cp -r pages/vendor/wireweave/src site/web/vendor/wireweave/
+      - name: Publish
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Web build: ${GITHUB_SHA::7}"
+          git push
