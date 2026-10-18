@@ -3,7 +3,7 @@
 # them into one page per language; run it with --readme to refresh README.md.
 #
 # Keep every language truthful to README.md: real AirDrop works on Linux with a
-# supported Wi-Fi card; on Windows iPhones send via LocalSend or the browser.
+# supported Wi-Fi card; on Windows iPhones send via LocalSend.
 
 [en]
 name = "English"
