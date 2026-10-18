@@ -247,4 +247,4 @@ def test_real_engine_mirrors_to_test_receiver_with_pin(tmp_path):
         m.shutdown()
         receiver.terminate()
         receiver.wait(5)
-    assert not m.control.exists()       # doubletake removed it when it ended
+    assert not m.control.exists()       # no stale address for the next start

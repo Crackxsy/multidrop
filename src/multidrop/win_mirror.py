@@ -214,3 +214,7 @@ class ScreenMirror:
                 self.proc.wait(5)
             except subprocess.TimeoutExpired:
                 self.proc.kill()
+                self.proc.wait(5)
+            # Windows' terminate() is TerminateProcess: doubletake cannot
+            # remove its control file itself, and the address would be stale.
+            self.control.unlink(missing_ok=True)
