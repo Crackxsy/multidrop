@@ -243,7 +243,8 @@ jobs:
       - name: Publish
         run: |
           rm -rf gh-pages/web && mkdir -p gh-pages/web/vendor/wireweave
-          cp pages/index.html pages/app.js pages/wire.js pages/style.css gh-pages/web/
+          cp pages/index.html pages/*.js pages/style.css pages/manifest.webmanifest gh-pages/web/
+          cp -r pages/icons gh-pages/web/
           cp -r pages/vendor/wireweave/src gh-pages/web/vendor/wireweave/
           cd gh-pages
           git config user.name "github-actions[bot]"
