@@ -187,6 +187,10 @@ async def test_send_errors(daemon, tmp_path):
     async with sess.post("/api/send", data=b"{oops",
                          headers={"Content-Type": "application/json"}) as r:
         assert r.status == 400
+    for path in ("/api/devices?refresh=1&timeout=abc", "/api/devices?refresh=1&timeout=nan",
+                 "/api/airplay?timeout=abc", "/api/events?since=abc", "/api/history?since=abc"):
+        async with sess.get(path) as r:
+            assert r.status == 400, path
 
 
 async def test_event_stream_and_failed_job(daemon, tmp_path):

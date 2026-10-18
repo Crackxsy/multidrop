@@ -107,18 +107,27 @@ async def status(request: web.Request) -> web.Response:
     return web.json_response(request.app[DAEMON].status())
 
 
+def _timeout(request: web.Request, longest: float) -> float:
+    try:
+        timeout = float(request.query.get("timeout", 3))
+    except ValueError:
+        raise web.HTTPBadRequest(text="timeout: seconds") from None
+    if timeout != timeout:              # nan slips through min/max
+        raise web.HTTPBadRequest(text="timeout: seconds")
+    return min(max(timeout, 0.5), longest)
+
+
 async def devices(request: web.Request) -> web.Response:
     d = request.app[DAEMON]
     if request.query.get("refresh"):
-        timeout = min(max(float(request.query.get("timeout", 3)), 0.5), 15)
-        await d.discover(timeout)
+        await d.discover(_timeout(request, 15))
     return web.json_response(d.device_groups())
 
 
 async def airplay(request: web.Request) -> web.Response:
     """AirPlay receivers and what they can do (screen, audio), from mDNS."""
     from multidrop.airplay_scan import scan
-    timeout = min(max(float(request.query.get("timeout", 3)), 0.5), 10)
+    timeout = _timeout(request, 10)
     d = request.app[DAEMON]
     return web.json_response(await scan(timeout, d.config.quickshare.mdns_addresses or None))
 
@@ -164,7 +173,10 @@ async def cancel_job(request: web.Request) -> web.Response:
 
 async def events(request: web.Request) -> web.StreamResponse:
     d = request.app[DAEMON]
-    since = int(request.query.get("since", 0) or 0)
+    try:
+        since = int(request.query.get("since", 0) or 0)
+    except ValueError:
+        return _json_error(400, "since: an event number")
     resp = web.StreamResponse(headers={"Content-Type": "text/event-stream",
                                        "Cache-Control": "no-store"})
     await resp.prepare(request)
