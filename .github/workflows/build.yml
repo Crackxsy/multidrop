@@ -277,19 +277,19 @@ jobs:
         run: |
           url="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           if git ls-remote --exit-code --heads "$url" gh-pages >/dev/null 2>&1; then
-            git clone -q --depth 1 --branch gh-pages "$url" site
+            git clone -q --depth 1 --branch gh-pages "$url" web-site
           else
-            git init -q -b gh-pages site
-            git -C site remote add origin "$url"
+            git init -q -b gh-pages web-site
+            git -C web-site remote add origin "$url"
           fi
       - name: Copy the web build into web/
         run: |
-          rm -rf site/web && mkdir -p site/web/vendor/wireweave
-          cp pages/index.html pages/app.js pages/wire.js pages/style.css site/web/
-          cp -r pages/vendor/wireweave/src site/web/vendor/wireweave/
+          rm -rf web-site/web && mkdir -p web-site/web/vendor/wireweave
+          cp pages/index.html pages/app.js pages/wire.js pages/style.css web-site/web/
+          cp -r pages/vendor/wireweave/src web-site/web/vendor/wireweave/
       - name: Publish
         run: |
-          cd site
+          cd web-site
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
