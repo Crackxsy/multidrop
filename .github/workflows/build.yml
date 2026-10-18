@@ -202,7 +202,7 @@ jobs:
     # Website on GitHub Pages (gh-pages branch, next to the APT repository),
     # built from site/strings.toml by tools/build_site.py. The branch is
     # checked out to gh-pages/, as site/ holds the sources.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.WEB_AT_ROOT != 'true'
     needs: [test-linux]
     runs-on: ubuntu-latest
     concurrency: gh-pages
@@ -287,6 +287,18 @@ jobs:
           rm -rf web-site/web && mkdir -p web-site/web/vendor/wireweave
           cp pages/index.html pages/app.js pages/wire.js pages/style.css web-site/web/
           cp -r pages/vendor/wireweave/src web-site/web/vendor/wireweave/
+      - name: Serve the app at the site root too (repository variable WEB_AT_ROOT=true, set on forks)
+        if: vars.WEB_AT_ROOT == 'true'
+        run: |
+          # Remove exactly the files the website job would have published, so nothing
+          # else on the branch (such as the APT repository) is touched.
+          python3 tools/build_site.py build/site >/dev/null
+          python3 -c "import pathlib; print('\n'.join(str(p) for p in pathlib.Path('build/site').rglob('*') if p.is_file()))" \
+            | while read -r f; do rm -f "web-site/${f#build/site/}"; done
+          cp pages/index.html pages/app.js pages/wire.js pages/style.css web-site/
+          mkdir -p web-site/vendor/wireweave
+          cp -r pages/vendor/wireweave/src web-site/vendor/wireweave/
+          touch web-site/.nojekyll
       - name: Publish
         run: |
           cd web-site
