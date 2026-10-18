@@ -266,6 +266,8 @@ Devices find each other through [AnEntrypoint/wireweave](https://github.com/AnEn
 nostr relays carry presence and WebRTC signalling, and the files go directly
 between the browsers.
 
+The page is AirDrop-like: you sit in the middle and your paired devices are
+around you, online or offline (an offline one shows when it was last seen).
 Pair once: show a 6-digit code on one device and enter it on the other, or
 scan the QR code shown there. The host approves the other device, and both
 keep a shared zone secret in local storage. Paired devices rejoin the zone
