@@ -271,7 +271,7 @@ function renderNetwork() {
   $("#nearby-hint").textContent = {
     checking: "Looking for devices on this network …",
     on: "",
-    unavailable: "Nearby is off: this browser cannot read its network address, so only paired devices appear.",
+    unavailable: "Nearby is off: this browser cannot read its network address, so only remembered devices appear.",
   }[state];
 }
 
