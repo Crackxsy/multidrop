@@ -116,6 +116,9 @@ ble = false
 [daemon]
 web_port = 0
 ''')
+    # Loopback only: the firewall is irrelevant, and its admin prompt must not appear.
+    (root / "pc-state").mkdir()
+    (root / "pc-state" / "windows-network-asked").touch()
     py = sys.executable
     # A no-op "browser": the app must not open windows on the desktop.
     env = {**os.environ, "MULTIDROP_CONFIG": str(cfg), "XDG_RUNTIME_DIR": str(root / "rt"),
@@ -159,6 +162,15 @@ web_port = 0
         spec.child_window(title="Got it", control_type="Button").wait("visible", 15).invoke()
         wait((root / "pc-state" / "windows-welcome-done").exists, "welcome remembered")
         step('window: "Got it" on the welcome card')
+        from multidrop import winshell
+        blocked = not winshell.firewall_rule_present()
+
+        def notice_shown():
+            return any(d.window_text() == "Let phones connect"
+                       for d in win.descendants(control_type="Button"))
+        wait(lambda: notice_shown() == blocked, "firewall notice matches the firewall")
+        step(f"window: firewall notice {'shown' if blocked else 'hidden'} (rule "
+             f"{'missing' if blocked else 'present'})")
         link = root / "appdata" / "Microsoft" / "Windows" / "SendTo" / "MultiDrop.lnk"
         box = wait(lambda: next((c for c in win.descendants(control_type="CheckBox")
                                  if "right-click" in c.window_text()), None),

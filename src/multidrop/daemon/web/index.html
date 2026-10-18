@@ -21,6 +21,14 @@
 </p>
 
 <main>
+  <section id="network" class="card warn" hidden>
+    <h2>Phones can’t reach this PC yet</h2>
+    <p>The Windows Firewall blocks phones from connecting. MultiDrop can allow devices on your
+      local network – nothing from the internet. Windows asks once for permission: choose <b>Yes</b>.</p>
+    <button type="button" class="primary" id="network-allow">Let phones connect</button>
+    <p class="meta" id="network-status"></p>
+  </section>
+
   <section id="welcome" class="card welcome" hidden>
     <h2>Welcome to MultiDrop</h2>
     <p>Phones and computers nearby can now send files to this PC – and you can send to them.</p>
@@ -29,7 +37,8 @@
       <li><b>iPhone:</b> use “Download in the browser” below (no app needed), or the free LocalSend app.</li>
       <li><b>From this PC:</b> drag files onto a device below, or right-click files in Explorer → Send to → MultiDrop.</li>
     </ul>
-    <p class="hint">If Windows asks whether MultiDrop may use the network, choose <b>Allow</b>.
+    <p class="hint">Windows asks once whether MultiDrop may make changes: choose <b>Yes</b>,
+      so phones on your Wi-Fi can reach this PC.
       Closing this window keeps MultiDrop running in the notification area, so you can still receive.</p>
     <button type="button" class="primary" id="welcome-ok">Got it</button>
   </section>
@@ -85,12 +94,19 @@
           <option value="5">5 min</option><option value="15" selected>15 min</option>
           <option value="60">60 min</option></select></label>
         <label><input type="checkbox" id="share-nopin" data-stop="1"> without PIN (secret link only)</label>
+        <label title="For browsers that refuse plain http. They warn once about the certificate. iPhones may refuse it on a local network; use LocalSend there."><input type="checkbox" id="share-https" data-stop="1"> secure link (https)</label>
       </div>
     </div>
     <div id="share" class="card" hidden>
+      <p class="notice" id="share-hotspot" hidden>This PC is on an iPhone’s hotspot. That iPhone
+        itself cannot open the link – other phones in the hotspot can. To get the files onto the
+        hotspot iPhone, connect both to a normal Wi-Fi.</p>
       <div id="share-qr"></div>
       <p><a id="share-url" target="_blank" rel="noreferrer"></a></p>
       <p id="share-pin-row">PIN: <span id="share-pin" class="pin"></span></p>
+      <p class="meta" id="share-tls-hint">The browser warns once that the connection is not private:
+        continue anyway, the link is still encrypted. iPhones may refuse it without a way to
+        continue; use the free LocalSend app there.</p>
       <p class="meta" id="share-info"></p>
       <button type="button" id="share-stop" class="danger">Stop</button>
     </div>

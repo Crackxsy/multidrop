@@ -10,6 +10,9 @@ Built into MultiDrop.exe by GitHub Actions (.github/workflows/build.yml).
 `MultiDrop.exe FILE...` (Explorer's "Send to") hands the files to the running
 instance and shows them in the UI to pick a device.
 `MultiDrop.exe --selftest` starts the service, checks its API and exits.
+`MultiDrop.exe --allow-network` (run elevated by the installer, else asked for
+once on first start) lets phones on the local network through the Windows
+Firewall, see winshell.py.
 """
 
 from __future__ import annotations
@@ -132,6 +135,42 @@ def _watch_events(service: Service, notify, show) -> None:
             log.debug("event poll: %s", e)
 
 
+class NetworkAccess:
+    """Firewall rules for MultiDrop's ports, asked for once automatically and
+    afterwards from the notice in the window."""
+
+    MDNS = 5353
+
+    def __init__(self, cfg: Config, config_args: list[str] = ()):
+        self.tcp = [p for p in (cfg.localsend.port, cfg.quickshare.port,
+                                cfg.localsend.share_port) if p]
+        self.udp = [p for p in (cfg.localsend.multicast_port, self.MDNS) if p]
+        self._config_args = list(config_args)
+        self._asked_flag = cfg.state_dir / "windows-network-asked"
+
+    def status(self) -> dict:
+        return {"ok": winshell.firewall_rule_present()}
+
+    def request(self) -> dict:
+        self._asked_flag.parent.mkdir(parents=True, exist_ok=True)
+        self._asked_flag.touch()
+        winshell.request_network_access(self._config_args)
+        return self.status()
+
+    def allow(self) -> int:
+        """The elevated part (--allow-network)."""
+        return winshell.allow_network(self.tcp, self.udp)
+
+    def ask_once(self) -> None:
+        if self._asked_flag.exists():
+            return
+        try:
+            if not self.status()["ok"]:
+                log.info("asking for network access: %s", self.request())
+        except (OSError, subprocess.SubprocessError) as e:
+            log.warning("network access: %s", e)
+
+
 def _exit(code: int) -> None:
     """Leave even if a library thread (zeroconf, executor) is still blocked:
     a lingering thread kept MultiDrop.exe alive after quitting."""
@@ -157,8 +196,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--browser", action="store_true",
                    help="show the UI in the web browser instead of the app window")
     p.add_argument("--selftest", action="store_true", help="start, check the API, exit")
+    p.add_argument("--allow-network", action="store_true",
+                   help="let phones on the local network through the Windows Firewall "
+                        "(needs admin rights; the installer runs it)")
     p.add_argument("paths", nargs="*", help="files to send (Explorer's \"Send to\")")
     args = p.parse_args(argv)
+    config_args = ["--config", args.config] if args.config else []
+    if args.allow_network:              # elevated: from the installer or NetworkAccess.request
+        cfg = Config.load(Path(args.config) if args.config else None)
+        return NetworkAccess(cfg).allow()
     paths = [str(Path(x).resolve()) for x in args.paths]
 
     log_dir = runtime_dir().parent
@@ -199,6 +245,8 @@ def main(argv: list[str] | None = None) -> int:
             service.api("/api/selection", {"paths": paths})
         except (OSError, ValueError) as e:
             log.warning("files from the command line: %s", e)
+    network = NetworkAccess(cfg, config_args)
+    threading.Thread(target=network.ask_once, daemon=True).start()
     window = None
     use_window = not args.browser and importlib.util.find_spec("webview") is not None
     if not use_window and (paths or not args.no_browser):
@@ -303,7 +351,8 @@ def main(argv: list[str] | None = None) -> int:
     if use_window:
         from multidrop.win_window import AppWindow, DesktopApi
         window = AppWindow(
-            url, DesktopApi(cfg.state_dir, cfg.download_dir, audio, mirror), log_dir / "webview",
+            url, DesktopApi(cfg.state_dir, cfg.download_dir, audio, mirror, network),
+            log_dir / "webview",
             hidden=args.no_browser and not paths,
             on_first_hide=lambda: icon.notify(
                 f"{APP_NAME} keeps running here, so phones can still send you files. "
@@ -322,7 +371,11 @@ def main(argv: list[str] | None = None) -> int:
             log.warning("app window unavailable, using the browser: %s", e)
             window = None
             webbrowser.open(url)
-            quitting.wait()
+        if not quitting.is_set():
+            # The window ended without "Quit": keep receiving, UI in the browser.
+            log.warning("app window ended unexpectedly; MultiDrop keeps running in the tray")
+            window = None
+        quitting.wait()
     if audio is not None:
         audio.stop()
     mirror.shutdown()

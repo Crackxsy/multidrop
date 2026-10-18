@@ -1,5 +1,6 @@
 """Windows shell integration, per user (no admin rights): start with Windows
-and an entry in Explorer's "Send to" menu.
+and an entry in Explorer's "Send to" menu. Plus network access through the
+Windows Firewall, the one part that needs an admin prompt.
 
 The names match packaging/windows/multidrop.iss, so the installer and the
 tray menu switch the same entries.
@@ -84,6 +85,68 @@ def set_sendto(on: bool) -> None:
         return
     program, args = launcher()
     create_shortcut(link, program, subprocess.list2cmdline(args), _icon())
+
+
+# -- network access (Windows Firewall) ------------------------------------------
+#
+# Phones can only reach MultiDrop if the firewall lets them in. One rule for
+# every network type, but only for devices on the same local network
+# (remoteip=localsubnet): Windows calls most Wi-Fis "public", and nothing on
+# the internet ever gets through. Firewall rules are per machine, so this
+# needs admin rights once: the installer, or MultiDrop itself on first start,
+# runs MultiDrop elevated with --allow-network, which calls allow_network().
+
+FIREWALL_RULE = f"{APP_NAME} (local network)"
+OLD_FIREWALL_RULES = (APP_NAME,)        # private networks only, before 0.2
+
+
+def _run(args: list[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(args, capture_output=True, text=True, timeout=60,
+                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+
+
+def firewall_rule_present() -> bool:
+    return _run(["netsh", "advfirewall", "firewall", "show", "rule",
+                 f"name={FIREWALL_RULE}"]).returncode == 0
+
+
+def firewall_commands(tcp: list[int], udp: list[int]) -> list[list[str]]:
+    """Commands that replace MultiDrop's rules: deletes first, then adds."""
+    base = ["netsh", "advfirewall", "firewall"]
+    rule = [f"name={FIREWALL_RULE}", "dir=in", "action=allow", "profile=any",
+            "remoteip=localsubnet"]
+    ports = lambda ps: "localport=" + ",".join(map(str, sorted(set(ps))))  # noqa: E731
+    deletes = [base + ["delete", "rule", f"name={name}"]
+               for name in (FIREWALL_RULE, *OLD_FIREWALL_RULES)]
+    return [*deletes,
+            base + ["add", "rule", *rule, "protocol=TCP", ports(tcp)],
+            base + ["add", "rule", *rule, "protocol=UDP", ports(udp)]]
+
+
+def allow_network(tcp: list[int], udp: list[int]) -> int:
+    """Runs elevated. 0 if the rules are in place."""
+    failed = 0
+    for cmd in firewall_commands(tcp, udp):
+        r = _run(cmd)
+        if cmd[3] == "add":             # a delete fails when there is nothing to delete
+            failed += r.returncode != 0
+    return 1 if failed else 0
+
+
+def request_network_access(extra_args: list[str] = ()) -> bool:
+    """Start MultiDrop elevated with --allow-network; Windows shows its admin
+    prompt. False if the user said no or it failed."""
+    program, args = launcher()
+    script = ("$p = Start-Process -FilePath $env:MD_PROGRAM -ArgumentList $env:MD_ARGS "
+              "-Verb RunAs -WindowStyle Hidden -Wait -PassThru -ErrorAction Stop; "
+              "exit $p.ExitCode")
+    # Values go through the environment, so paths are never parsed as code.
+    env = {**os.environ, "MD_PROGRAM": program,
+           "MD_ARGS": subprocess.list2cmdline([*args, "--allow-network", *extra_args])}
+    r = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
+                       env=env, capture_output=True, timeout=600,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    return r.returncode == 0
 
 
 def create_shortcut(link: Path, target: str, arguments: str, icon: str) -> None:
