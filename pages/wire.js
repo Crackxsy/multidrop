@@ -626,6 +626,7 @@ export function createWire({ alias, onEvent }) {
     lanPcs.delete(pk);
     p.pc.close();
     lan.set(pk, { state: ok ? "yes" : "no", at: Date.now() });
+    if (ok) announceName(pk);              // in case the first one was lost while the peer opened
     emit({ event: "devices" });
   }
 
