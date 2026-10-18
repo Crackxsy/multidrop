@@ -46,26 +46,31 @@ matter which phone is in front of you: send a file, it arrives.
 | | Windows | Linux | Works with |
 |---|:---:|:---:|---|
 | **Quick Share / Nearby Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung Galaxy, Pixel – no extra app |
-| **AirDrop** – send & receive | via LocalSend or browser¹ | ✅² | iPhone, iPad, Mac |
+| **AirDrop** – send & receive | via LocalSend¹ | ✅² | iPhone, iPad, Mac |
 | **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, other PCs |
-| **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app at all |
+| **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app at all⁵ |
 | **AirPlay screen mirroring** | ✅³ | ✅ | Apple TV, Mac, AirPlay TVs (Samsung, LG, Roku …) |
 | **AirPlay audio** | ✅⁴ | ✅ | Apple TV, HomePod, Sonos, AirPlay speakers |
 
 <sub>¹ Windows Wi-Fi drivers cannot speak Apple's AWDL radio, so iPhones send
-to Windows with the free LocalSend app or by scanning a QR code in the browser.
+to and receive from Windows with the free LocalSend app.
 ² needs a supported Wi-Fi card, see [AirDrop on Linux](#airdrop-on-linux).
 ³ with MultiDrop-Setup.exe; the portable MultiDrop.exe has no mirroring.
 ⁴ receivers that accept AirPlay 1 streams without a password; others are
-marked as not supported.</sub>
+marked as not supported.
+⁵ Safari on many iPhones blocks downloads from local addresses
+(“HTTPS-Only”, or “network connection lost” with the secure link); use
+LocalSend there.</sub>
 
 ## Download
 
 ### Windows 10 / 11
 
 1. Download **[MultiDrop-Setup.exe](../../releases/latest)**.
-2. Run it. It installs just for you – no admin rights needed.
-3. Click **Allow** when Windows Firewall asks, so phones can reach your PC.
+2. Run it. It installs just for you; only the firewall step below asks for
+   admin rights.
+3. Click **Yes** when Windows asks once, so phones on your Wi-Fi can reach your
+   PC (a firewall rule for devices on your local network only).
 
 Don't want to install anything? Take the portable **MultiDrop.exe** from the
 same page. Uninstall any time in *Settings → Apps*.
@@ -145,8 +150,8 @@ changes needed. Details: [docs/INSTALL-ROOT.md](docs/INSTALL-ROOT.md).
 
 Not Apple's radio itself – Windows Wi-Fi drivers cannot speak AWDL. MultiDrop
 covers everything else on Windows: iPhones send to the PC with the free
-LocalSend app or by scanning a QR code (no app at all), the PC sends to iPhones
-through the browser download, and Android and Samsung phones use their built-in
+LocalSend app, the PC sends to iPhones with LocalSend or – where Safari allows
+it – the browser download, and Android and Samsung phones use their built-in
 Quick Share. On top you get AirPlay screen mirroring and audio.
 </details>
 
@@ -156,15 +161,14 @@ Quick Share. On top you get AirPlay screen mirroring and audio.
 Yes. MultiDrop sends to and receives from iPhones, iPads and Macs with real
 AirDrop on Linux, using a supported Wi-Fi card (MediaTek MT7925, Intel in
 exclusive mode) – see [AirDrop on Linux](#airdrop-on-linux). Without one,
-iPhones use LocalSend or the browser download.
+iPhones use LocalSend.
 </details>
 
 <details>
 <summary><b>How do I transfer files from an iPhone to a Windows PC wirelessly?</b></summary>
 
-Start MultiDrop on the PC. On the iPhone, either install the free LocalSend app
-and pick the PC, or scan the **browser download** tile's QR code with the
-camera. No cable, no iTunes, no cloud.
+Start MultiDrop on the PC. On the iPhone, install the free LocalSend app and
+pick the PC. No cable, no iTunes, no cloud.
 </details>
 
 <details>
@@ -194,9 +198,11 @@ supports it.
 <details>
 <summary><b>Nothing arrives on Windows.</b></summary>
 
-Windows Firewall probably blocked MultiDrop on first start. Allow it for
-private networks in *Windows Security → Firewall → Allow an app*, and make
-sure your Wi-Fi is set to *Private*.
+Windows Firewall probably blocks phones. If MultiDrop's window shows
+*Phones can't reach this PC yet*, click **Let phones connect** and choose
+**Yes**. This adds one rule for devices on your local network (any Wi-Fi,
+nothing from the internet); the portable `MultiDrop.exe` asks for it on first
+start, and uninstalling removes it.
 </details>
 
 <details>
