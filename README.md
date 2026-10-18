@@ -191,6 +191,20 @@ shairport-sync.
 AirPlay mirroring and audio (no real Apple TV, HomePod or Sonos yet), Windows
 on real hardware. [Device reports](../../issues/new/choose) are very welcome.
 
+## Web version
+
+`pages/` is the same interface as the desktop UI, running in a browser on
+GitHub Pages (published to `web/` on the `gh-pages` branch). It has no daemon:
+devices in the same room find each other through
+[AnEntrypoint/wireweave](https://github.com/AnEntrypoint/wireweave) (nostr
+presence and signalling, WebRTC data channels), and files go directly between
+the browsers. Join a room by scanning the QR code on the page. Only browser-to-browser
+transfers work there: AirDrop, Quick Share, LocalSend, AirPlay and the desktop
+integration need the native app.
+
+Clone with submodules to work on it: `git clone --recurse-submodules …`, or
+`git submodule update --init` in an existing checkout.
+
 ## Development
 
 ```bash
