@@ -1,52 +1,63 @@
-<p align="center"><img src="docs/banner.png" alt="MultiDrop" width="100%"></p>
+<p align="center"><img src="docs/banner.png" alt="MultiDrop – AirDrop, Quick Share, LocalSend and AirPlay for Windows and Linux" width="100%"></p>
 
-<h3 align="center">AirDrop, Quick Share, LocalSend and AirPlay – for Linux and Windows.</h3>
+<h1 align="center">MultiDrop</h1>
+
+<h3 align="center">AirDrop, Quick Share, LocalSend and AirPlay in one app – for Windows and Linux.</h3>
 
 <p align="center">
-  Send files to any phone nearby, and get files from it. No cloud, no cable, no account.
+  Your PC in the share menu of every phone in the room. iPhone, Android, Samsung.<br>
+  No cloud, no cable, no account – free and open source.
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/digitaldanis/multidrop"></a>
+  <a href="../../releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/digitaldanis/multidrop?label=download&color=1f6feb"></a>
+  <a href="../../releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/digitaldanis/multidrop/total?color=1a7f37"></a>
+  <a href="../../stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/digitaldanis/multidrop?style=flat&color=yellow"></a>
   <a href="../../actions/workflows/build.yml"><img alt="Build" src="https://github.com/digitaldanis/multidrop/actions/workflows/build.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
-  <img alt="Linux | Windows" src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows-informational">
+  <img alt="Windows | Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-informational">
 </p>
 
 <p align="center">
   <a href="#download"><b>Download</b></a> ·
+  <a href="#what-multidrop-does">Features</a> ·
   <a href="#how-to-use-it">How to use it</a> ·
   <a href="#faq">FAQ</a> ·
-  <a href="#command-line">Command line</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a>
+  <a href="#multidrop-in-your-language">🌍 Your language</a> ·
+  <a href="https://digitaldanis.github.io/multidrop/">Website</a>
 </p>
 
 ---
 
-iPhones speak AirDrop, Android and Samsung phones speak Quick Share, and the
-rest use LocalSend. **MultiDrop speaks all of them**, so your PC finally shows
-up in the share menu of every phone in the room.
+**MultiDrop is a free, open-source app that brings AirDrop, Google and Samsung
+Quick Share, LocalSend and AirPlay to Windows and Linux PCs – all in one app.**
+iPhones speak AirDrop, Android and Samsung phones speak Quick Share, the rest
+use LocalSend. MultiDrop speaks all of them at the same time, so it does not
+matter which phone is in front of you: send a file, it arrives.
 
-- 📲 **Every phone** – iPhone, Android, Samsung, and any phone with a browser
-- 🔒 **Stays local** – straight from device to device, nothing goes through a server
+- 📲 **Every phone, one app** – iPhone, iPad, Mac, Android, Samsung Galaxy, Pixel, Xiaomi, and any phone with a browser
+- ⚡ **Right in the phone's share menu** – no app on Android and Samsung (Quick Share), none on iPhones with AirDrop on Linux
+- 📺 **AirPlay from your PC** – mirror your Windows or Linux screen to an Apple TV, play your PC's sound on HomePod, Sonos and AirPlay speakers
+- 🔒 **Stays local and private** – straight from device to device over your Wi-Fi, encrypted, no server, no account, no tracking
 - ✋ **Asks first** – nothing lands on your PC until you accept it
-- 🔊 **More than files** – mirror your screen or play your PC's sound on AirPlay speakers
 
-## What works where
+## What MultiDrop does
 
-| | Linux | Windows | Works with |
+| | Windows | Linux | Works with |
 |---|:---:|:---:|---|
-| **Quick Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung (no extra app) |
-| **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, PCs with LocalSend |
+| **Quick Share / Nearby Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung Galaxy, Pixel – no extra app |
+| **AirDrop** – send & receive | via LocalSend or browser¹ | ✅² | iPhone, iPad, Mac |
+| **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, other PCs |
 | **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app at all |
-| **AirDrop** – send & receive | ✅¹ | – | iPhone, iPad, Mac |
-| **AirPlay** – mirror your screen | ✅ | ✅³ | Apple TV, Mac, AirPlay TVs |
-| **AirPlay** – play audio | ✅ | ✅² | Apple TV, HomePod, Sonos, Mac |
+| **AirPlay screen mirroring** | ✅³ | ✅ | Apple TV, Mac, AirPlay TVs (Samsung, LG, Roku …) |
+| **AirPlay audio** | ✅⁴ | ✅ | Apple TV, HomePod, Sonos, AirPlay speakers |
 
-<sub>¹ needs a supported Wi-Fi card, see [AirDrop on Linux](#airdrop-on-linux).
-² receivers that accept unencrypted or RSA AirPlay 1 streams without a password;
-others are listed as not supported.
-³ with MultiDrop-Setup.exe; the portable MultiDrop.exe has no mirroring.</sub>
+<sub>¹ Windows Wi-Fi drivers cannot speak Apple's AWDL radio, so iPhones send
+to Windows with the free LocalSend app or by scanning a QR code in the browser.
+² needs a supported Wi-Fi card, see [AirDrop on Linux](#airdrop-on-linux).
+³ with MultiDrop-Setup.exe; the portable MultiDrop.exe has no mirroring.
+⁴ receivers that accept AirPlay 1 streams without a password; others are
+marked as not supported.</sub>
 
 ## Download
 
@@ -76,8 +87,7 @@ Or grab `multidrop_*_all.deb` from [Releases](../../releases/latest) and run
 `sudo apt install ./multidrop_*_all.deb`. For AirPlay mirroring, run
 `multidrop-fetch-doubletake` once.
 
-<details>
-<summary><b>Fedora, Arch, openSUSE and other distributions</b></summary>
+### Fedora, Arch, openSUSE and other distributions
 
 ```bash
 git clone https://github.com/digitaldanis/multidrop.git ~/multidrop
@@ -87,8 +97,6 @@ git clone https://github.com/digitaldanis/multidrop.git ~/multidrop
 Needs Python ≥ 3.11, GTK 4 and libadwaita. The installer needs no root and
 tells you if a system package is missing. Uninstall with
 `tools/install-desktop.sh --remove`.
-
-</details>
 
 ## How to use it
 
@@ -133,11 +141,54 @@ changes needed. Details: [docs/INSTALL-ROOT.md](docs/INSTALL-ROOT.md).
 ## FAQ
 
 <details>
-<summary><b>How do I send from an iPhone to Windows?</b></summary>
+<summary><b>Is there AirDrop for Windows?</b></summary>
 
-AirDrop needs Apple's radio link, which Windows can't do. Use the **browser
-download** (scan the QR code, enter the PIN) or the free LocalSend app on the
-iPhone.
+Not Apple's radio itself – Windows Wi-Fi drivers cannot speak AWDL. MultiDrop
+covers everything else on Windows: iPhones send to the PC with the free
+LocalSend app or by scanning a QR code (no app at all), the PC sends to iPhones
+through the browser download, and Android and Samsung phones use their built-in
+Quick Share. On top you get AirPlay screen mirroring and audio.
+</details>
+
+<details>
+<summary><b>Is there AirDrop for Linux?</b></summary>
+
+Yes. MultiDrop sends to and receives from iPhones, iPads and Macs with real
+AirDrop on Linux, using a supported Wi-Fi card (MediaTek MT7925, Intel in
+exclusive mode) – see [AirDrop on Linux](#airdrop-on-linux). Without one,
+iPhones use LocalSend or the browser download.
+</details>
+
+<details>
+<summary><b>How do I transfer files from an iPhone to a Windows PC wirelessly?</b></summary>
+
+Start MultiDrop on the PC. On the iPhone, either install the free LocalSend app
+and pick the PC, or scan the **browser download** tile's QR code with the
+camera. No cable, no iTunes, no cloud.
+</details>
+
+<details>
+<summary><b>Can I use Quick Share (Nearby Share) on Linux or Windows?</b></summary>
+
+Yes. MultiDrop appears in Android's and Samsung's Quick Share menu on both
+Windows and Linux – no Google account, no app on the phone. Samsung phones
+sometimes hide PCs; then scan the **QR code** tile.
+</details>
+
+<details>
+<summary><b>How do I mirror my Windows or Linux screen to an Apple TV?</b></summary>
+
+Pick the TV under *Show this PC's screen on a TV* (Windows) or *Mirror screen*
+(Linux) and enter the code the TV shows the first time. Works with Apple TV,
+Macs and AirPlay TVs from Samsung, LG, Roku and others.
+</details>
+
+<details>
+<summary><b>Is MultiDrop free? Does anything leave my network?</b></summary>
+
+Free and open source (GPL-3.0). There is no server and no account; transfers go
+directly between the devices on your network, encrypted where the protocol
+supports it.
 </details>
 
 <details>
@@ -149,13 +200,6 @@ sure your Wi-Fi is set to *Private*.
 </details>
 
 <details>
-<summary><b>My Samsung or Android phone doesn't show up.</b></summary>
-
-Scan the **QR code** tile in MultiDrop with the phone's camera. That works
-even when the phone can't see the PC on the network.
-</details>
-
-<details>
 <summary><b>Where do received files go?</b></summary>
 
 Into `Downloads/multidrop` in your home folder; change it with `download_dir`
@@ -163,12 +207,27 @@ in the config. On Windows, *Open received files* in the window or *Received
 files* in the tray menu opens it.
 </details>
 
-<details>
-<summary><b>Does anything leave my network?</b></summary>
+## MultiDrop in your language
 
-No. There is no server and no account; transfers are local and encrypted
-where the protocol supports it.
-</details>
+<!-- generated by tools/build_site.py --readme; edit site/strings.toml -->
+- 🇩🇪 **Deutsch** – AirDrop, Quick Share, LocalSend und AirPlay in einer App für Windows und Linux: Dateien zwischen PC und iPhone, Android oder Samsung senden – ohne Kabel, Cloud oder Konto. [Mehr](https://digitaldanis.github.io/multidrop/de/)
+- 🇪🇸 **Español** – AirDrop, Quick Share, LocalSend y AirPlay en una sola app para Windows y Linux: envía archivos entre tu PC y tu iPhone, Android o Samsung, sin cables, sin nube y sin cuenta. [Más](https://digitaldanis.github.io/multidrop/es/)
+- 🇫🇷 **Français** – AirDrop, Quick Share, LocalSend et AirPlay dans une seule appli pour Windows et Linux : envoyez des fichiers entre votre PC et un iPhone, Android ou Samsung, sans câble, sans cloud, sans compte. [Plus](https://digitaldanis.github.io/multidrop/fr/)
+- 🇧🇷 **Português** – AirDrop, Quick Share, LocalSend e AirPlay em um só app para Windows e Linux: envie arquivos entre o PC e iPhone, Android ou Samsung, sem cabo, sem nuvem e sem conta. [Mais](https://digitaldanis.github.io/multidrop/pt/)
+- 🇮🇹 **Italiano** – AirDrop, Quick Share, LocalSend e AirPlay in un'unica app per Windows e Linux: invia file tra PC e iPhone, Android o Samsung, senza cavi, cloud o account. [Altro](https://digitaldanis.github.io/multidrop/it/)
+- 🇳🇱 **Nederlands** – AirDrop, Quick Share, LocalSend en AirPlay in één app voor Windows en Linux: stuur bestanden tussen pc en iPhone, Android of Samsung, zonder kabel, cloud of account. [Meer](https://digitaldanis.github.io/multidrop/nl/)
+- 🇵🇱 **Polski** – AirDrop, Quick Share, LocalSend i AirPlay w jednej aplikacji dla Windows i Linux: przesyłaj pliki między PC a iPhonem, Androidem lub Samsungiem, bez kabla, chmury i konta. [Więcej](https://digitaldanis.github.io/multidrop/pl/)
+- 🇹🇷 **Türkçe** – AirDrop, Quick Share, LocalSend ve AirPlay tek uygulamada, Windows ve Linux için: PC ile iPhone, Android veya Samsung arasında kablosuz, bulutsuz ve hesapsız dosya gönderin. [Daha fazla](https://digitaldanis.github.io/multidrop/tr/)
+- 🇷🇺 **Русский** – AirDrop, Quick Share, LocalSend и AirPlay в одном приложении для Windows и Linux: передавайте файлы между ПК и iPhone, Android или Samsung без кабеля, облака и аккаунта. [Подробнее](https://digitaldanis.github.io/multidrop/ru/)
+- 🇺🇦 **Українська** – AirDrop, Quick Share, LocalSend і AirPlay в одному застосунку для Windows і Linux: надсилайте файли між ПК та iPhone, Android чи Samsung без кабелю, хмари й облікового запису. [Докладніше](https://digitaldanis.github.io/multidrop/uk/)
+- 🇨🇳 **中文** – 一个应用集成 AirDrop、Quick Share、LocalSend 和 AirPlay，支持 Windows 和 Linux：在电脑与 iPhone、安卓或三星手机之间传文件，无需数据线、云端或账号。 [了解更多](https://digitaldanis.github.io/multidrop/zh/)
+- 🇯🇵 **日本語** – AirDrop、Quick Share、LocalSend、AirPlay をひとつにまとめた Windows・Linux 用アプリ。PC と iPhone、Android、Samsung の間でケーブルもクラウドもアカウントも不要でファイルを送れます。 [詳しく](https://digitaldanis.github.io/multidrop/ja/)
+- 🇰🇷 **한국어** – AirDrop, Quick Share, LocalSend, AirPlay를 하나로 담은 Windows·Linux 앱: 케이블, 클라우드, 계정 없이 PC와 iPhone, 안드로이드, 삼성 폰 사이에서 파일을 주고받으세요. [더 보기](https://digitaldanis.github.io/multidrop/ko/)
+- 🇮🇳 **हिन्दी** – Windows और Linux के लिए एक ही ऐप में AirDrop, Quick Share, LocalSend और AirPlay: PC और iPhone, Android या Samsung के बीच बिना केबल, क्लाउड या अकाउंट के फ़ाइलें भेजें। [और जानें](https://digitaldanis.github.io/multidrop/hi/)
+- 🇸🇦 **العربية** – ‏AirDrop وQuick Share وLocalSend وAirPlay في تطبيق واحد لنظامي Windows وLinux: أرسل الملفات بين الكمبيوتر وiPhone أو Android أو Samsung بلا كابل ولا سحابة ولا حساب. [المزيد](https://digitaldanis.github.io/multidrop/ar/)
+- 🇮🇩 **Bahasa Indonesia** – AirDrop, Quick Share, LocalSend, dan AirPlay dalam satu aplikasi untuk Windows dan Linux: kirim file antara PC dan iPhone, Android, atau Samsung tanpa kabel, cloud, atau akun. [Selengkapnya](https://digitaldanis.github.io/multidrop/id/)
+- 🇻🇳 **Tiếng Việt** – AirDrop, Quick Share, LocalSend và AirPlay trong một ứng dụng cho Windows và Linux: gửi tệp giữa PC và iPhone, Android hoặc Samsung, không cần cáp, đám mây hay tài khoản. [Xem thêm](https://digitaldanis.github.io/multidrop/vi/)
+<!-- end of generated block -->
 
 ## Command line
 
@@ -188,12 +247,16 @@ multidrop share photos/                    # browser download with QR code + PIN
 **Tested:** AirDrop Linux → Mac; Quick Share and LocalSend against other
 implementations and the official LocalSend app; the Linux desktop app; the
 Windows build, installer and app window in CI; Windows AirPlay audio against
-shairport-sync.
+shairport-sync; Windows screen mirroring in CI against doubletake's test
+receiver (synthetic video).
 
 **Not verified on real devices yet:** Quick Share with Android/Samsung phones,
-AirPlay mirroring and audio (no real Apple TV, HomePod or Sonos yet), Windows
-on real hardware. Windows screen mirroring is tested in CI against doubletake's
-test receiver with synthetic video only. [Device reports](../../issues/new/choose) are very welcome.
+AirPlay mirroring and audio with a real Apple TV, HomePod or Sonos, Windows on
+real hardware. [Device reports](../../issues/new/choose) are very welcome –
+"Galaxy S24 → Windows 11 works" helps a lot.
+
+⭐ **If MultiDrop saved you a cable, star the repo** – it helps other people
+find it.
 
 ## Development
 
@@ -204,7 +267,8 @@ python3 -m venv .venv && .venv/bin/pip install -e ".[test]" && .venv/bin/pytest 
 ```
 src/multidrop/     service, protocols, Linux desktop app, Windows app
 tests/             unit, loopback and interop tests
-tools/             install-desktop.sh, fetch-doubletake.sh, build-omdrop-owl.sh, dev/
+tools/             install-desktop.sh, fetch-doubletake.sh, build-omdrop-owl.sh, build_site.py, dev/
+site/              website texts in every language (GitHub Pages)
 data/              icons, systemd unit
 packaging/         .deb and APT repository, Windows build and installer, release notes
 docs/              architecture, protocol research, root setup

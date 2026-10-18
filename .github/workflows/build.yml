@@ -198,12 +198,39 @@ jobs:
           --title "MultiDrop $GITHUB_REF_NAME"
           --notes-file packaging/RELEASE_NOTES.md
 
+  pages:
+    # Website on GitHub Pages (gh-pages branch, next to the APT repository),
+    # built from site/strings.toml by tools/build_site.py.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test-linux]
+    runs-on: ubuntu-latest
+    concurrency: gh-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/build_site.py build/site
+      - name: Publish
+        run: |
+          cp -r build/site/. site/
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || { git commit -m "Website: ${GITHUB_SHA::7}" && git push; }
+
   apt-repo:
     # Signed APT repository on GitHub Pages (gh-pages branch):
     #   sudo apt install multidrop   after adding it once, see README.
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [release]
     runs-on: ubuntu-24.04
+    concurrency: gh-pages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
