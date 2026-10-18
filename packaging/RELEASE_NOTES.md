@@ -10,17 +10,32 @@ Share files, your screen and audio with devices nearby – Linux and Windows.
   start how phones send to it and keeps receiving in the notification area.
 - **Explorer "Send to"** – right-click files → *Send to* → *MultiDrop*, then
   click a device.
-- **AirPlay audio on Windows** – play the PC's sound on AirPlay speakers.
+- **AirPlay on Windows** – mirror the screen to Apple TV, Macs and AirPlay
+  TVs (with `MultiDrop-Setup.exe`), and play the PC's sound on AirPlay
+  speakers.
+- **Phones reach the PC without setup** – Windows asks once for a firewall
+  rule that lets in devices on your local network only (any Wi-Fi, nothing
+  from the internet). Uninstalling removes it.
+- **Browser download follows the network** – the link and QR code move along
+  when the PC switches Wi-Fi; optional https link.
 - **Command line on Windows** – `multidrop send/devices/receive/share` talk to
   the running app; the test suite now runs on Windows in CI.
+- **Security:** received file names could point outside the download folder
+  (names starting with `//`, and drive letters or network paths on Windows).
+  They now always stay inside it. Please update.
 - Fixes: AirPlay calls that time out are cancelled cleanly; the browser
-  download stops reliably after it expires or after too many wrong PINs.
+  download stops reliably after it expires or after too many wrong PINs;
+  file names Windows doesn't allow (`CON`, `a?.txt`) no longer fail; the
+  local API answers bad input with 400 instead of a server error.
+- **iPhones:** use the free LocalSend app. Safari on many iPhones refuses the
+  browser download on a home network.
 
 **Windows:** run `MultiDrop-Setup.exe` (per-user install, no admin rights) or
 the portable `MultiDrop.exe` (Quick Share, LocalSend, browser download,
-Explorer "Send to", AirPlay audio to speakers). MultiDrop opens in its own
-window and keeps receiving in the notification area when you close it. On
-first start allow Windows Firewall for private networks.
+Explorer "Send to", AirPlay audio to speakers; no screen mirroring). MultiDrop
+opens in its own window and keeps receiving in the notification area when you
+close it. Click **Yes** when Windows asks once, so phones on your Wi-Fi can
+reach the PC.
 
 **Ubuntu/Debian:** `sudo apt install multidrop` after adding the APT repository
 (see README), or `sudo apt install ./multidrop_*_all.deb`.
