@@ -46,14 +46,14 @@ matter which phone is in front of you: send a file, it arrives.
 | | Windows | Linux | Works with |
 |---|:---:|:---:|---|
 | **Quick Share / Nearby Share** – send & receive, QR code | ✅ | ✅ | Android, Samsung Galaxy, Pixel – no extra app |
-| **AirDrop** – send & receive | via LocalSend or browser¹ | ✅² | iPhone, iPad, Mac |
+| **AirDrop** – send & receive | via LocalSend¹ | ✅² | iPhone, iPad, Mac |
 | **LocalSend** – send & receive | ✅ | ✅ | iPhone, Android, other PCs |
 | **Browser download** – QR code + PIN | ✅ | ✅ | any phone, no app at all⁵ |
 | **AirPlay screen mirroring** | ✅³ | ✅ | Apple TV, Mac, AirPlay TVs (Samsung, LG, Roku …) |
 | **AirPlay audio** | ✅⁴ | ✅ | Apple TV, HomePod, Sonos, AirPlay speakers |
 
 <sub>¹ Windows Wi-Fi drivers cannot speak Apple's AWDL radio, so iPhones send
-to Windows with the free LocalSend app or by scanning a QR code in the browser.
+to and receive from Windows with the free LocalSend app.
 ² needs a supported Wi-Fi card, see [AirDrop on Linux](#airdrop-on-linux).
 ³ with MultiDrop-Setup.exe; the portable MultiDrop.exe has no mirroring.
 ⁴ receivers that accept AirPlay 1 streams without a password; others are
@@ -67,8 +67,10 @@ LocalSend there.</sub>
 ### Windows 10 / 11
 
 1. Download **[MultiDrop-Setup.exe](../../releases/latest)**.
-2. Run it. It installs just for you – no admin rights needed.
-3. Click **Allow** when Windows Firewall asks, so phones can reach your PC.
+2. Run it. It installs just for you; only the firewall step below asks for
+   admin rights.
+3. Click **Yes** when Windows asks once, so phones on your Wi-Fi can reach your
+   PC (a firewall rule for devices on your local network only).
 
 Don't want to install anything? Take the portable **MultiDrop.exe** from the
 same page. Uninstall any time in *Settings → Apps*.
@@ -196,9 +198,11 @@ supports it.
 <details>
 <summary><b>Nothing arrives on Windows.</b></summary>
 
-Windows Firewall probably blocked MultiDrop on first start. Allow it for
-private networks in *Windows Security → Firewall → Allow an app*, and make
-sure your Wi-Fi is set to *Private*.
+Windows Firewall probably blocks phones. If MultiDrop's window shows
+*Phones can't reach this PC yet*, click **Let phones connect** and choose
+**Yes**. This adds one rule for devices on your local network (any Wi-Fi,
+nothing from the internet); the portable `MultiDrop.exe` asks for it on first
+start, and uninstalling removes it.
 </details>
 
 <details>

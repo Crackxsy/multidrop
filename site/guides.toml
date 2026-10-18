@@ -17,7 +17,7 @@ h1 = "AirDrop for Linux"
 lead = "MultiDrop puts your Linux PC into the AirDrop list of iPhones, iPads and Macs nearby – in both directions, with no app on the Apple device."
 sections = [
   ["How it works", "AirDrop runs over Apple Wireless Direct Link (AWDL), a Wi-Fi link between devices. MultiDrop uses [omdrop-owl](https://github.com/t4t5/omdrop-owl), an open implementation of AWDL, and speaks the AirDrop protocol on top of it. Your PC then appears in the iPhone's share sheet like a Mac."],
-  ["What you need", "A Wi-Fi card that omdrop-owl supports: tested with **MediaTek MT7925**; Intel cards work in exclusive mode. Without a supported card, iPhones can still send to Linux with the free LocalSend app or download files from the PC by scanning a QR code."],
+  ["What you need", "A Wi-Fi card that omdrop-owl supports: tested with **MediaTek MT7925**; Intel cards work in exclusive mode. Without a supported card, iPhones can still send to and receive from Linux with the free LocalSend app."],
   ["Wi-Fi channel", "AWDL lives on channel 6, 44 or 149. If your Wi-Fi network is on another channel, MultiDrop briefly moves to the same network on one of those channels and moves back afterwards. No router changes are needed."],
 ]
 steps = [
@@ -43,13 +43,13 @@ h1 = "AirDrop for Windows: what works and what doesn't"
 lead = "Windows can't run Apple's AirDrop radio, but you can still move files between an iPhone and a Windows PC in a few seconds, wirelessly and without a cloud account."
 sections = [
   ["Why there is no real AirDrop on Windows", "AirDrop needs Apple Wireless Direct Link (AWDL). Windows Wi-Fi drivers don't give apps the access AWDL needs, so no Windows app – including MultiDrop – can appear in the iPhone's AirDrop list. Apps that claim otherwise use a different protocol behind an AirDrop-like name."],
-  ["What MultiDrop does instead", "**iPhone → PC:** install the free LocalSend app on the iPhone and pick your PC, it shows up automatically. **PC → iPhone:** share files from MultiDrop and scan the QR code with the iPhone camera; the iPhone downloads them in Safari after entering a PIN. No app needed for that direction."],
+  ["What MultiDrop does instead", "**iPhone → PC:** install the free LocalSend app on the iPhone and pick your PC, it shows up automatically. **PC → iPhone:** pick the iPhone in MultiDrop; LocalSend on the iPhone receives the files."],
   ["And Android?", "Android and Samsung phones send to the same MultiDrop on Windows through their built-in Quick Share menu, no app needed. If you also want real AirDrop, MultiDrop does that on Linux with a supported Wi-Fi card."],
 ]
 steps = [
-  "Download MultiDrop-Setup.exe and run it. It installs for your user only, no admin rights needed.",
-  "Click Allow when Windows Firewall asks, so phones can reach the PC.",
-  "On the iPhone, open LocalSend and pick your PC – or use the browser download tile in MultiDrop to send files to the iPhone.",
+  "Download MultiDrop-Setup.exe and run it. It installs for your user only.",
+  "Click Yes when Windows asks once, so phones on your Wi-Fi can reach the PC.",
+  "On the iPhone, open LocalSend and pick your PC.",
 ]
 faq = [
   ["Will Apple ever bring AirDrop to Windows?", "Apple hasn't announced it. MultiDrop works today with the protocols iPhones already support."],
@@ -97,11 +97,11 @@ sections = [
 ]
 steps = [
   "Download MultiDrop-Setup.exe (or the portable MultiDrop.exe) and run it.",
-  "Click Allow when Windows Firewall asks and make sure your Wi-Fi is set to Private.",
+  "Click Yes when Windows asks once, so phones on your Wi-Fi can reach the PC.",
   "On the phone, tap Share → Quick Share and pick your PC.",
 ]
 faq = [
-  ["Nothing arrives on Windows – what now?", "Windows Firewall probably blocked MultiDrop. Allow it for private networks in Windows Security → Firewall → Allow an app."],
+  ["Nothing arrives on Windows – what now?", "Windows Firewall probably blocks phones. Click **Let phones connect** in the MultiDrop window and choose Yes; this allows devices on your local network only."],
   ["Can I send from the PC to the phone?", "Yes. Drop files on the phone in the MultiDrop window, or turn on Send to in the settings and right-click files in Explorer → Send to → MultiDrop."],
 ]
 
@@ -111,13 +111,13 @@ card = "iPhone to PC"
 teaser = "Photos and files over Wi-Fi, no cable"
 platform = "both"
 title = "Transfer files from iPhone to PC wirelessly – no cable, no iTunes"
-description = "How to send photos, videos and files from an iPhone to a Windows or Linux PC over Wi-Fi with MultiDrop: AirDrop on Linux, LocalSend or a QR code on Windows."
+description = "How to send photos, videos and files from an iPhone to a Windows or Linux PC over Wi-Fi with MultiDrop: AirDrop on Linux, LocalSend on Windows."
 h1 = "Send files from an iPhone to a PC without a cable"
 lead = "Photos, videos, PDFs – straight from the iPhone to your Windows or Linux PC over Wi-Fi. No cable, no iTunes, no cloud upload."
 sections = [
   ["On Linux: AirDrop", "With a supported Wi-Fi card (MediaTek MT7925, Intel in exclusive mode), your Linux PC appears in the iPhone's AirDrop list. Tap Share → AirDrop → your PC. See [AirDrop for Linux](https://digitaldanis.github.io/multidrop/airdrop-for-linux/)."],
   ["On Windows and Linux: LocalSend", "Install the free LocalSend app on the iPhone. It finds MultiDrop on the PC automatically; pick the files and the PC."],
-  ["PC → iPhone without any app", "Share files from MultiDrop and scan the QR code with the iPhone camera. Safari asks for the PIN shown on the PC and downloads the files."],
+  ["PC → iPhone", "Pick the iPhone in MultiDrop; LocalSend on the iPhone receives the files. The browser download needs no app, but Safari on many iPhones refuses it on a home network."],
 ]
 faq = [
   ["Is it private?", "Yes. Transfers go directly over your network, encrypted where the protocol supports it; there is no server and no account."],
