@@ -1,21 +1,46 @@
 // Browser transport for the GitHub Pages build. AnEntrypoint/wireweave carries
-// presence and WebRTC signalling for one room over nostr relays; the file bytes
-// go over its ordered data channel as JSON control frames plus binary chunks.
+// presence and WebRTC signalling over nostr relays; file bytes go over its ordered
+// data channel as JSON control frames plus binary chunks.
+//
+// Pairing: a 6-digit code names a short-lived pairing room. The host approves the
+// joiner, then sends a zone secret over the encrypted data channel. A zone is a
+// room that paired devices join on every page load, so they stay in it.
 import { createWireweave } from "./vendor/wireweave/src/wireweave.js";
+import { createDataSession } from "./vendor/wireweave/src/data.js";
 import * as NostrTools from "nostr-tools";
 import * as xstate from "xstate";
 
 const NAMESPACE = "multidrop";
+const ZONE_KEY = "multidrop-zone";
 const CHUNK = 64 * 1024;                 // well under the message limit browsers accept
 const MAX_BUFFERED = 4 * 1024 * 1024;    // pause sending while the channel is this full
+const PAIR_TTL_MS = 5 * 60 * 1000;       // a shown code stops working after this
+const PAIR_ACK_MS = 5000;                // host waits this long for the joiner's ack
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const newId = () => crypto.randomUUID().slice(0, 12);
 const baseName = (p) => p.split(/[\\/]/).filter(Boolean).pop() || "file";
+const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+const sha256Hex = async (text) =>
+  hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text))));
+const zoneRoom = (secret) => sha256Hex(`zone:${secret}`);
+const pairRoom = (code) => sha256Hex(`pair:${code}`);
+const newZoneSecret = () => hex(crypto.getRandomValues(new Uint8Array(16)));
 
-export function createWire({ alias, room, onEvent }) {
+export const newPairCode = () => String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+
+export function loadZone() {
+  try { return JSON.parse(localStorage.getItem(ZONE_KEY)); } catch { return null; }
+}
+
+function saveZone(zone) {
+  if (zone) localStorage.setItem(ZONE_KEY, JSON.stringify(zone));
+  else localStorage.removeItem(ZONE_KEY);
+}
+
+export function createWire({ alias, onEvent }) {
   const ww = createWireweave({ nostrTools: NostrTools, xstate });
-  const data = ww.ensureData({ namespace: NAMESPACE });
+  const data = ww.ensureData({ namespace: NAMESPACE });   // the zone session
   const emit = (ev) => onEvent(ev);
 
   const outgoing = new Map();        // job id -> {id, pubkey, info, files: [{fid, name, file}], state}
@@ -23,6 +48,7 @@ export function createWire({ alias, room, onEvent }) {
   const receiving = new Map();       // pubkey -> file currently arriving {id, fid, name, size, parts, got}
   const queues = new Map();          // pubkey -> tail of that peer's transfer queue
   const cancelled = new Set();
+  let pairing = null;                // {session, role, peer, name, ttl, ack}
 
   const nameOf = (pk) => data.participants.get("nostr-" + pk.slice(0, 12))?.identity || pk.slice(0, 8);
 
@@ -163,16 +189,120 @@ export function createWire({ alias, room, onEvent }) {
     return job;
   }
 
+  // -- zone: paired devices share one room and stay in it -------------------
+
+  async function joinZone(secret) {
+    await data.disconnect();
+    await data.connect(await zoneRoom(secret), { displayName: alias });
+  }
+
+  // -- pairing: a short-lived room per code, host approves the joiner -------
+
+  function closePairing() {
+    const p = pairing;
+    if (!p) return;
+    pairing = null;
+    clearTimeout(p.ttl);
+    clearTimeout(p.ack);
+    p.session.disconnect().catch(() => {});
+  }
+
+  function onPairMessage(p, pk, raw) {
+    if (typeof raw !== "string") return;
+    let msg;
+    try { msg = JSON.parse(raw); } catch { return; }
+    if (msg.k === "hello") {
+      if (p.peer) return;                       // one device per pairing code
+      p.peer = pk;
+      p.name = msg.name;
+      emit(p.role === "host"
+        ? { event: "pair_request", name: msg.name }
+        : { event: "pair_waiting", name: msg.name });
+      return;
+    }
+    if (pk !== p.peer) return;
+    if (msg.k === "zone" && p.role === "joiner") {
+      p.paired = true;                          // the close that follows is not a lost connection
+      saveZone({ secret: msg.secret, host: msg.host, joined: Date.now() });
+      p.session.send(pk, JSON.stringify({ k: "paired" }));
+      emit({ event: "paired", name: msg.host });
+      joinZone(msg.secret).catch((e) => emit({ event: "error", message: `zone: ${e.message}` }));
+      setTimeout(() => { if (pairing === p) closePairing(); }, 1000);
+    } else if (msg.k === "paired" && p.role === "host") {
+      p.paired = true;
+      emit({ event: "pair_done", name: p.name });
+      closePairing();
+    } else if (msg.k === "declined" && p.role === "joiner") {
+      emit({ event: "pair_declined" });
+      closePairing();
+    }
+  }
+
+  async function openPairing(code, role) {
+    closePairing();
+    const session = createDataSession({ fsm: ww.fsm, xstate, relayPool: ww.pool, auth: ww.auth, namespace: NAMESPACE });
+    const p = { session, role, peer: null, name: "", ttl: null, ack: null };
+    pairing = p;
+    p.ttl = setTimeout(() => { if (pairing === p) { closePairing(); emit({ event: "pair_expired" }); } }, PAIR_TTL_MS);
+    session.addEventListener("peer-open", (e) => {
+      if (e.detail.unreliable || pairing !== p) return;
+      session.send(e.detail.peerPubkey, JSON.stringify({ k: "hello", name: alias, role }));
+    });
+    session.addEventListener("data", (e) => onPairMessage(p, e.detail.peerPubkey, e.detail.data));
+    session.addEventListener("peer-close", (e) => {
+      if (pairing === p && !p.paired && !e.detail.unreliable && e.detail.peerPubkey === p.peer) emit({ event: "pair_lost" });
+    });
+    try {
+      await session.connect(await pairRoom(code), { displayName: alias });
+    } catch (e) {
+      if (pairing === p) closePairing();
+      emit({ event: "error", message: `pairing: ${e.message}` });
+    }
+  }
+
+  async function answerPair(accept) {
+    const p = pairing;
+    if (!p || p.role !== "host" || !p.peer) return;
+    if (!accept) {
+      p.session.send(p.peer, JSON.stringify({ k: "declined" }));
+      closePairing();
+      emit({ event: "pair_declined" });
+      return;
+    }
+    const zone = loadZone() || { secret: newZoneSecret(), host: alias, joined: Date.now() };
+    saveZone(zone);
+    p.session.send(p.peer, JSON.stringify({ k: "zone", secret: zone.secret, host: alias }));
+    p.ack = setTimeout(() => { if (pairing === p) { emit({ event: "pair_done", name: p.name }); closePairing(); } }, PAIR_ACK_MS);
+    await joinZone(zone.secret);
+  }
+
   return {
     pubkey: () => ww.auth.pubkey,
 
     async join() {
       ww.auth.loadFromStorage() || ww.auth.generateKey();
       ww.pool.connect();
-      await data.connect(room, { displayName: alias });
+      const zone = loadZone();
+      if (zone) await joinZone(zone.secret);
     },
 
-    leave() { return data.disconnect(); },
+    leave() {
+      closePairing();
+      return data.disconnect();
+    },
+
+    zone: loadZone,
+
+    async leaveZone() {
+      closePairing();
+      saveZone(null);
+      await data.disconnect();
+      emit({ event: "devices" });
+    },
+
+    openPairing,
+    closePairing,
+    answerPair,
 
     devices() {
       return [...data.peers.keys()]

@@ -1,18 +1,17 @@
 // MultiDrop web build (GitHub Pages). The same screens as daemon/web/app.js,
 // on AnEntrypoint/wireweave instead of the local daemon. Peer-supplied strings
 // (device and file names, texts) are always inserted as text, never as HTML.
-import { createWire } from "./wire.js";
+import { createWire, newPairCode, loadZone } from "./wire.js";
 import qrcode from "qrcode-generator";
 
 const $ = (sel) => document.querySelector(sel);
 const LS_ALIAS = "multidrop-alias";
-const LS_ROOM = "multidrop-room";
 const jobs = new Map();        // job id -> {info, files: Map(name -> {done,size}), state, error}
 const unchecked = new Map();   // offer id -> Set of file ids the user unticked
 let offers = [];               // incoming offers, oldest first
-let devices = [];              // reachable devices in this room
+let pendingPair = null;        // {name} while a joiner waits for approval (host side)
+let devices = [];              // devices online in this zone
 let wire = null;
-let room = "";
 let alias = "";
 
 function el(tag, attrs = {}, ...children) {
@@ -38,29 +37,82 @@ function randomId(n, alphabet = "abcdefghjkmnpqrstuvwxyz23456789") {
   return [...crypto.getRandomValues(new Uint8Array(n))].map((b) => alphabet[b % alphabet.length]).join("");
 }
 
-// A room link (#room=…) joins that room and remembers it; without one the last room is reused.
-function roomId() {
-  const fromLink = location.hash.match(/room=([\w-]+)/);
-  if (fromLink) {
-    localStorage.setItem(LS_ROOM, fromLink[1]);
-    history.replaceState(null, "", location.pathname);
-  }
-  let id = localStorage.getItem(LS_ROOM);
-  if (!id) { id = randomId(12); localStorage.setItem(LS_ROOM, id); }
-  return id;
-}
-
 function aliasName() {
   let name = localStorage.getItem(LS_ALIAS);
   if (!name) { name = `Browser ${randomId(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")}`; localStorage.setItem(LS_ALIAS, name); }
   return name;
 }
 
-// -- status, offers -------------------------------------------------------
+const spaced = (code) => `${code.slice(0, 3)} ${code.slice(3)}`;
+const pageUrl = (params) => `${location.origin}${location.pathname}${params}`;
 
 function showStatus(text) {
   $("#status").textContent = text;
 }
+
+// -- pairing --------------------------------------------------------------
+
+function showPairState(text) {
+  $("#pair-state").textContent = text;
+}
+
+function renderPairRequest() {
+  const box = $("#pair-requests");
+  box.replaceChildren();
+  if (!pendingPair) return;
+  box.append(el("div", { class: "card offer" },
+    el("div", { class: "name" }, `${pendingPair.name} wants to pair with this device`),
+    el("div", { class: "meta" }, "Accept only a device you can see in front of you."),
+    el("div", { class: "row" },
+      el("button", { class: "primary", type: "button", onclick: () => answerPair(true) }, "Accept"),
+      el("button", { class: "danger", type: "button", onclick: () => answerPair(false) }, "Decline"))));
+}
+
+function answerPair(accept) {
+  pendingPair = null;
+  renderPairRequest();
+  wire.answerPair(accept);
+  if (accept) showPairState("Pairing …");
+}
+
+function showHostCode() {
+  const code = newPairCode();
+  const url = pageUrl(`#pair=${code}`);
+  $("#pair-code-show").textContent = spaced(code);
+  $("#pair-url").textContent = url;
+  $("#pair-url").href = url;
+  const qr = qrcode(0, "M");
+  qr.addData(url);
+  qr.make();
+  const svg = new DOMParser().parseFromString(qr.createSvgTag(4, 2), "image/svg+xml");
+  $("#pair-qr").replaceChildren(document.importNode(svg.documentElement, true));
+  $("#pair-host").hidden = false;
+  showPairState("Waiting for the other device to enter this code …");
+  wire.openPairing(code, "host");
+}
+
+function hideHostCode() {
+  $("#pair-host").hidden = true;
+  wire.closePairing();
+}
+
+function joinWithCode(raw) {
+  const code = String(raw).replace(/\D/g, "");
+  if (code.length !== 6) { showPairState("Enter the 6-digit code shown on the other device."); return; }
+  showPairState("Connecting …");
+  wire.openPairing(code, "joiner");
+}
+
+function renderZoneState() {
+  const zone = loadZone();
+  $("#leave-zone").hidden = !zone;
+  if ($("#pair-state").textContent) return;
+  showPairState(zone
+    ? `Paired${zone.host ? ` via ${zone.host}` : ""}. This device stays in your zone.`
+    : "Not paired yet. Show a code here, or enter the code from another device.");
+}
+
+// -- status, offers -------------------------------------------------------
 
 function renderOffers() {
   const box = $("#offers");
@@ -127,7 +179,9 @@ function renderDevices() {
   }
   if (previous) select.value = previous;
   if (!devices.length) {
-    box.append(el("p", { class: "hint" }, "No devices yet. Open the QR link below on another phone or computer; it joins this room."));
+    box.append(el("p", { class: "hint" }, loadZone()
+      ? "No paired device is online right now. Paired devices appear here whenever their page is open."
+      : "No paired devices yet. Pair one with a code or QR above."));
   }
 }
 
@@ -183,20 +237,6 @@ function sendFiles(device, files) {
   }
 }
 
-// -- join code ------------------------------------------------------------
-
-function showJoinCode() {
-  const url = `${location.origin}${location.pathname}#room=${room}`;
-  const link = $("#join-url");
-  link.textContent = url;
-  link.href = url;
-  const qr = qrcode(0, "M");
-  qr.addData(url);
-  qr.make();
-  const svg = new DOMParser().parseFromString(qr.createSvgTag(4, 2), "image/svg+xml");
-  $("#qr").replaceChildren(document.importNode(svg.documentElement, true));
-}
-
 // -- jobs -----------------------------------------------------------------
 
 function renderJobs() {
@@ -247,10 +287,44 @@ function addLog(content) {
 function onEvent(ev) {
   switch (ev.event) {
     case "connected":
-      showStatus(`Ready – visible as “${alias}” in this room`);
+      showStatus(`Ready – visible as “${alias}”`);
       break;
     case "devices":
       refreshDevices();
+      renderZoneState();
+      break;
+    case "pair_waiting":
+      showPairState(`Connected to ${ev.name}. Waiting for it to accept …`);
+      break;
+    case "pair_request":
+      pendingPair = { name: ev.name };
+      renderPairRequest();
+      addLog(`${ev.name} asked to pair`);
+      break;
+    case "paired":
+      $("#pair-code").value = "";
+      showPairState(`Paired with ${ev.name}. This device stays in your zone.`);
+      renderZoneState();
+      addLog(`Paired with ${ev.name}`);
+      break;
+    case "pair_done":
+      hideHostCode();
+      showPairState(`Paired with ${ev.name || "the other device"}. Devices stay in your zone.`);
+      renderZoneState();
+      addLog(`Paired with ${ev.name || "a device"}`);
+      break;
+    case "pair_declined":
+      hideHostCode();
+      pendingPair = null;
+      renderPairRequest();
+      showPairState("Pairing declined.");
+      break;
+    case "pair_expired":
+      hideHostCode();
+      showPairState("The code expired. Show a new one to pair.");
+      break;
+    case "pair_lost":
+      showPairState("Connection to the other device was lost. Try again.");
       break;
     case "offer":
       offers.push(ev.offer);
@@ -285,12 +359,23 @@ function onEvent(ev) {
 // -- init -----------------------------------------------------------------
 
 function init() {
-  room = roomId();
   alias = aliasName();
   document.querySelectorAll(".alias").forEach((e) => { e.textContent = `“${alias}”`; });
   showStatus("connecting …");
 
   $("#refresh").addEventListener("click", refreshDevices);
+  $("#pair-show").addEventListener("click", showHostCode);
+  $("#pair-cancel").addEventListener("click", () => { hideHostCode(); showPairState(""); renderZoneState(); });
+  $("#pair-join").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    joinWithCode($("#pair-code").value);
+  });
+  $("#leave-zone").addEventListener("click", () => {
+    wire.leaveZone();
+    addLog("This device left its zone");
+    renderZoneState();
+    refreshDevices();
+  });
   $("#text-form").addEventListener("submit", (ev) => {
     ev.preventDefault();
     const pk = $("#text-target").value;
@@ -303,13 +388,27 @@ function init() {
     $("#text").value = "";
   });
 
-  showJoinCode();
   renderOffers();
   renderJobs();
 
-  wire = createWire({ alias, room, onEvent });
+  wire = createWire({ alias, onEvent });
   window.addEventListener("pagehide", () => { wire.leave(); });
-  wire.join().catch((e) => showStatus(`Could not join the room: ${e.message}`));
+
+  // Keys must exist before any room is joined, so join first; a pairing link (QR code)
+  // then prefills the code and starts pairing at once.
+  const link = location.hash.match(/pair=(\d{6})/);
+  if (link) history.replaceState(null, "", location.pathname);
+  wire.join()
+    .then(() => {
+      showStatus(`Ready – visible as “${alias}”`);
+      refreshDevices();
+      renderZoneState();
+      if (link) {
+        $("#pair-code").value = link[1];
+        joinWithCode(link[1]);
+      }
+    })
+    .catch((e) => showStatus(`Could not join: ${e.message}`));
 }
 
 init();
