@@ -1,6 +1,7 @@
 """Browser download (LocalSend download API) on 127.0.0.1."""
 
 import asyncio
+import errno
 import html
 import io
 import zipfile
@@ -185,3 +186,27 @@ async def test_share_follows_the_network(tmp_path, monkeypatch):
                 assert r.status == 200
     finally:
         await s.stop()
+
+
+async def test_share_stops_if_it_cannot_move(tmp_path, monkeypatch):
+    """The port is taken while moving to the new address: stop, don't pretend."""
+    from multidrop.backends.localsend import webshare
+    address = ["127.0.0.1"]
+    monkeypatch.setattr(webshare, "_current_address", lambda: address[0])
+    monkeypatch.setattr(webshare, "_throwaway_tls",
+                        lambda a, real=webshare._throwaway_tls: real("127.0.0.1"))
+    (tmp_path / "a.txt").write_text("hello")
+    events = []
+    s = WebShare([tmp_path / "a.txt"], alias="PC", pin=None, minutes=5, port=0,
+                 https=True, on_event=lambda e, d: events.append((e, d)))
+    await s.start()
+    s._follow.cancel()
+
+    async def taken(port):
+        raise OSError(errno.EADDRINUSE, "in use")
+    monkeypatch.setattr(s, "_listen", taken)
+    address[0] = "192.0.2.7"
+    await asyncio.wait_for(s._follow_network(interval=0.01), 5)
+    await asyncio.wait_for(s.stopped.wait(), 5)
+    assert ("share_stopped", {"reason": "network changed", "downloads": 0}) in events
+    assert not any(e == "share_moved" for e, _ in events)

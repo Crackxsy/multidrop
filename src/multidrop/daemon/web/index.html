@@ -94,7 +94,7 @@
           <option value="5">5 min</option><option value="15" selected>15 min</option>
           <option value="60">60 min</option></select></label>
         <label><input type="checkbox" id="share-nopin" data-stop="1"> without PIN (secret link only)</label>
-        <label title="Needed when the iPhone refuses plain http. The phone warns once about the certificate: tap Show Details, then visit this website."><input type="checkbox" id="share-https" data-stop="1" checked> secure link (https)</label>
+        <label title="For browsers that refuse plain http. They warn once about the certificate. iPhones may refuse it on a local network; use LocalSend there."><input type="checkbox" id="share-https" data-stop="1"> secure link (https)</label>
       </div>
     </div>
     <div id="share" class="card" hidden>
@@ -104,8 +104,9 @@
       <div id="share-qr"></div>
       <p><a id="share-url" target="_blank" rel="noreferrer"></a></p>
       <p id="share-pin-row">PIN: <span id="share-pin" class="pin"></span></p>
-      <p class="meta" id="share-tls-hint">The phone warns that the connection is not private: tap
-        <b>Show Details</b>, then <b>visit this website</b>. The link is still encrypted.</p>
+      <p class="meta" id="share-tls-hint">The browser warns once that the connection is not private:
+        continue anyway, the link is still encrypted. iPhones may refuse it without a way to
+        continue; use the free LocalSend app there.</p>
       <p class="meta" id="share-info"></p>
       <button type="button" id="share-stop" class="danger">Stop</button>
     </div>

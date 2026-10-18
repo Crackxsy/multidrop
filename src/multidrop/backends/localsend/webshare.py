@@ -4,8 +4,9 @@
 Runs only while the user explicitly shares something and stops by itself
 after `minutes`. Plain HTTP on its own port by default, because browsers warn
 about self-signed certificates. With `https=True` it uses a throwaway
-certificate for the share's address instead: the browser warns once, but
-iPhones set to refuse plain HTTP can still connect. Protection, beyond the spec:
+certificate for the share's address instead: the browser warns once. iOS
+refuses untrusted certificates on local IP addresses (#27), so this does not
+help iPhones set to refuse plain HTTP. Protection, beyond the spec:
 
 * a random key in the URL (`?k=`); every route needs it, so the port alone
   reveals nothing, and the key travels via QR code or by reading it off;
@@ -146,7 +147,12 @@ class WebShare:
             self.public_address = address
             if self.https:
                 await self._site.stop()
-                await self._listen(self.port)
+                try:
+                    await self._listen(self.port)
+                except OSError as e:        # port taken meanwhile: not listening anymore
+                    log.warning("share cannot move to %s: %s", address, e)
+                    self._stop_soon("network changed")
+                    return
             self.on_event("share_moved", self.status())
 
     def _stop_soon(self, reason: str) -> None:
