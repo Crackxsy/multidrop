@@ -3,11 +3,14 @@
 ;   and build\mirror, the screen mirroring engine: packaging\windows\make_mirror_pack.py)
 ; The "Send to" shortcut and the Run value have the same names as in
 ; src/multidrop/winshell.py, so the tray menu and the installer switch the same entries.
+; The firewall rule is per machine: the "firewall" task asks Windows once for admin
+; rights (MultiDrop.exe --allow-network); everything else stays per user.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
 #define RunKey "Software\Microsoft\Windows\CurrentVersion\Run"
+#define FirewallRule "MultiDrop (local network)"
 
 [Setup]
 AppId={{10B10BCF-89B1-4852-A0E7-0464EA70C45A}
@@ -36,6 +39,7 @@ RestartApplications=no
 [Tasks]
 Name: sendto; Description: "Show MultiDrop in Explorer's ""Send to"" menu"
 Name: autostart; Description: "Start MultiDrop with Windows"
+Name: firewall; Description: "Let phones on my Wi-Fi reach MultiDrop (Windows asks for permission once)"
 Name: desktopicon; Description: "Desktop shortcut"; Flags: unchecked
 
 [Files]
@@ -60,8 +64,26 @@ Filename: "{app}\MultiDrop.exe"; Description: "Start MultiDrop"; Flags: nowait p
 Type: files; Name: "{usersendto}\MultiDrop.lnk"
 
 [Code]
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
 begin
+  { ShellExec instead of [Run]: saying "No" to the admin prompt is no error,
+    MultiDrop then offers it again in its window. }
+  if (CurStep = ssPostInstall) and WizardIsTaskSelected('firewall') then
+    ShellExec('runas', ExpandConstant('{app}\MultiDrop.exe'), '--allow-network', '',
+              SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
+begin
+  if CurUninstallStep = usUninstall then
+    { Added by the installer or by MultiDrop itself; needs admin rights to go. }
+    ShellExec('runas', ExpandConstant('{sys}\netsh.exe'),
+              'advfirewall firewall delete rule name="{#FirewallRule}"', '',
+              SW_HIDE, ewWaitUntilTerminated, ResultCode);
   { The tray menu may have added it without the installer task. }
   if CurUninstallStep = usPostUninstall then
     RegDeleteValue(HKEY_CURRENT_USER, '{#RunKey}', 'MultiDrop');
